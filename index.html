@@ -113,7 +113,13 @@
           查看示例数据
         </button>
 
-        <!-- Edit Modal Trigger -->
+        <!-- My Environment -->
+          <button onclick="openAssetModal('assets')" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 text-xs sm:text-sm font-medium transition">
+            <span>🏢 我的环境</span>
+            <span id="assetCountBadge" class="px-1.5 py-0.5 rounded-full bg-sky-500/20 text-sky-200 text-[10px] font-bold">0</span>
+          </button>
+          <button onclick="openAssetModal('settings')" title="情报源与设置" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm transition">⚙</button>
+          <!-- Edit Modal Trigger -->
         <button onclick="openEditorModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs sm:text-sm font-medium transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -147,18 +153,7 @@
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap items-center gap-3 sm:gap-4">
           <span class="font-medium text-slate-300">情报源状态:</span>
-          <span id="statusKev" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-slate-500"></span> CISA KEV: <span class="text-slate-300">等待中</span>
-          </span>
-          <span id="statusNvd" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-slate-500"></span> NVD API: <span class="text-slate-300">等待中</span>
-          </span>
-          <span id="statusZw" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-slate-500"></span> Cloudflare Zero Wire: <span class="text-slate-300">等待中</span>
-          </span>
-          <span id="statusOsv" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-slate-500"></span> OSV / GHSA: <span class="text-slate-300">等待中</span>
-          </span>
+          <div id="feedChips" class="flex flex-wrap items-center gap-x-3 gap-y-1"></div>
           <button id="btnFilterZw" onclick="toggleZeroWireFilter()" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition">
             <span>⚡</span>
             <span id="btnFilterZwText">Zero Wire 专题: 全部展示</span>
@@ -194,6 +189,11 @@
         <button onclick="loadReferenceSample()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">查看示例数据</button>
       </div>
     </div>
+
+    <!-- Environment impact panel (shown after live data loads) -->
+    <section id="envPanel" class="no-print mb-7 bg-white rounded-3xl border border-slate-200 shadow-md p-5 sm:p-6" style="display:none">
+      <div id="envPanelInner"></div>
+    </section>
 
     <div id="cardsContainer" style="display:none" class="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start">
 
@@ -413,6 +413,11 @@
       </section>
 
     </div>
+
+    <!-- Vendor advisories & security news (RSS) -->
+    <section id="feedPanel" class="no-print mt-8 bg-white rounded-3xl border border-slate-200 shadow-md p-5 sm:p-6" style="display:none">
+      <div id="feedPanelInner"></div>
+    </section>
   </main>
 
   <!-- ==================== INTEL ITEM INSPECTOR DRAWER / MODAL ==================== -->
@@ -438,7 +443,11 @@
           <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">简报摘要 · BRIEFING SUMMARY</div>
           <p id="detailSummary" class="text-slate-800 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80"></p>
         </div>
-        <div id="detailActionWrap">
+        <div id="detailEnvWrap" class="hidden">
+            <div class="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🎯 命中你的资产 · YOUR ASSETS</div>
+            <p id="detailEnv" class="text-slate-800 leading-relaxed bg-red-50 p-3 rounded-2xl border border-red-200 whitespace-pre-line text-xs"></p>
+          </div>
+          <div id="detailActionWrap">
           <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">处置建议 · RECOMMENDED ACTION</div>
           <p id="detailAction" class="text-slate-700 leading-relaxed bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200/70"></p>
         </div>
@@ -570,6 +579,100 @@
       </div>
     </div>
   </div>
+
+
+  <!-- ==================== MY ENVIRONMENT: ASSETS & SETTINGS MODAL ==================== -->
+  <div id="assetModal" class="no-print fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4" onclick="if(event.target===this) closeAssetModal()">
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <h3 class="font-bold text-base sm:text-lg">🏢 我的环境</h3>
+          <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <button id="tabBtnAssets" onclick="switchAssetTab('assets')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-white">资产清单</button>
+            <button id="tabBtnSettings" onclick="switchAssetTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">情报源与设置</button>
+          </div>
+        </div>
+        <button onclick="closeAssetModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto text-sm space-y-5">
+        <!-- TAB: assets -->
+        <div id="tabAssets" class="space-y-5">
+          <p class="text-xs text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-2xl p-3">
+            资产清单只保存在<b>本浏览器</b>（localStorage），不会上传到任何服务器。「深度扫描 NVD」会把产品名作为关键词发送给 NVD 官方 API。
+            <b>产品</b>必填；填写<b>版本</b>后可按版本范围精确判断；<b>别名</b>用 ; 分隔（如 GlobalProtect;Panorama）。
+          </p>
+          <div class="p-4 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-3">
+            <div class="font-bold text-sky-900">+ 添加资产</div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <input id="aVendor" placeholder="厂商（如 Palo Alto Networks）" class="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs" />
+              <input id="aProduct" placeholder="产品 *（如 PAN-OS）" class="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs" />
+              <input id="aVersion" placeholder="版本（如 11.1.4）" class="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs" />
+              <input id="aKeywords" placeholder="别名（可选，; 分隔）" class="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs" />
+              <input id="aNote" placeholder="备注（负责人/环境）" class="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs" />
+            </div>
+            <button onclick="addAssetFromForm()" class="px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">添加</button>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="font-bold text-slate-800">导入你自己的资产库（CMDB / Excel 导出 / 扫描器清单）</div>
+            <textarea id="aImportText" rows="4" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-mono" placeholder="粘贴 CSV / TSV / JSON。表头可用中英文：vendor(厂商), product(产品), version(版本), keywords(别名), note(备注)&#10;没有表头时按「厂商,产品,版本,别名,备注」顺序读取；只有一列时视为产品名。"></textarea>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="importAssetsFromText()" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">导入粘贴内容</button>
+              <label class="px-4 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700 cursor-pointer">
+                选择文件（.csv / .tsv / .json / .txt）<input type="file" accept=".csv,.tsv,.json,.txt" class="hidden" onchange="importAssetsFromFile(this)" />
+              </label>
+              <button onclick="downloadTemplate()" class="px-3 py-1.5 rounded-xl text-xs text-sky-700 hover:underline">下载 CSV 模板</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="font-bold text-slate-800">当前资产 <span id="assetCountLabel" class="text-xs font-normal text-slate-400"></span></div>
+              <div class="flex gap-3 text-xs">
+                <button onclick="exportAssets('csv')" class="text-sky-700 hover:underline">导出 CSV</button>
+                <button onclick="exportAssets('json')" class="text-sky-700 hover:underline">导出 JSON</button>
+                <button onclick="clearAssets()" class="text-rose-600 hover:underline">清空</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="text-slate-400"><tr><th class="pb-1.5 pr-2 font-semibold">厂商</th><th class="pb-1.5 pr-2 font-semibold">产品</th><th class="pb-1.5 pr-2 font-semibold">版本</th><th class="pb-1.5 pr-2 font-semibold">别名</th><th class="pb-1.5 pr-2 font-semibold">备注</th><th></th></tr></thead>
+                <tbody id="assetTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: settings -->
+        <div id="tabSettings" class="space-y-5 hidden">
+          <div>
+            <div class="font-bold text-slate-800 mb-1">厂商公告与新闻源（RSS / Atom）</div>
+            <p class="text-xs text-slate-500 mb-2">核心源（CISA KEV · NVD · GitHub Advisory · Cloudflare Zero Wire）始终启用。RSS 通过浏览器直连，失败时自动尝试公共 CORS 代理（只会发送公开的 feed 地址，不含你的资产信息）。</p>
+            <div id="feedToggles" class="rounded-2xl border border-slate-200 p-3 max-h-56 overflow-y-auto"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+              <input id="cfName" placeholder="自定义源名称（如 Ivanti PSIRT）" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs" />
+              <input id="cfUrl" placeholder="RSS/Atom 地址（https://…）" class="sm:col-span-2 rounded-xl border border-slate-300 px-3 py-1.5 text-xs" />
+            </div>
+            <button onclick="addCustomFeed()" class="mt-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">+ 添加自定义源</button>
+          </div>
+          <div>
+            <div class="font-bold text-slate-800 mb-1">EPSS 利用概率</div>
+            <label class="flex items-center gap-2 text-xs"><input id="setEpss" type="checkbox" /> 为 P0 / P1 / 命中资产的 CVE 显示 EPSS（FIRST.org 公共 API）</label>
+          </div>
+          <div>
+            <div class="font-bold text-slate-800 mb-1">NVD API Key（可选）</div>
+            <input id="setNvdKey" type="password" autocomplete="off" placeholder="留空则使用公共额度（5 次 / 30 秒）" class="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs" />
+            <p class="text-[11px] text-slate-400 mt-1">仅用于「深度扫描」提速；明文保存在本浏览器。如果浏览器因跨域拒绝携带密钥，页面会自动退回无密钥请求。</p>
+          </div>
+          <button onclick="saveSettingsAndRefetch()" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs sm:text-sm font-semibold shadow">保存并重新拉取</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <script>
     // =========================================================================
@@ -753,6 +856,7 @@
       const panel = document.getElementById('loadingPanel');
       panel.style.display = '';
       document.getElementById('cardsContainer').style.display = 'none';
+      ['envPanel', 'feedPanel'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
       const failed = mode === 'error';
       document.getElementById('loadingSpinnerBox').style.display = failed ? 'none' : '';
       document.getElementById('loadingTitle').textContent = failed ? '暂时无法获取实时情报' : '正在拉取最新威胁情报…';
@@ -837,6 +941,7 @@
                     <span class="px-2 py-0.5 rounded-md bg-sky-100/90 text-sky-800 font-bold text-xs">${escapeHtml(item.vendor)}</span>
                     <span class="font-bold text-[#c8322b] text-xs sm:text-sm tracking-tight group-hover:underline">${escapeHtml(item.cve)}</span>
                     ${isZw ? '<span class="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-bold text-[10px]">⚡ Cloudflare Radar</span>' : ''}
+                    ${envPill(item)}${epssPill(item)}
                   </div>
                   <span class="px-2.5 py-0.5 rounded-md ${badgeStyle} font-bold text-xs shadow-xs shrink-0">
                     ${escapeHtml(item.badge)}
@@ -864,6 +969,7 @@
         <div onclick="openDetailModal('p1', ${idx})" role="button" tabindex="0" class="cursor-pointer bg-white rounded-xl px-3.5 py-2.5 shadow-2xs border border-slate-200/60 hover:border-sky-300 hover:bg-sky-50/30 transition text-xs sm:text-[13px] leading-snug flex items-start justify-between gap-2">
           <div>
             <span class="font-bold text-[#c8322b]">${escapeHtml(item.key)}</span>
+            ${envPill(item)}${epssPill(item)}
             <span class="text-slate-800 ml-1">${escapeHtml(item.desc)}</span>
           </div>
           <span class="no-print text-[10px] text-slate-400 shrink-0 mt-0.5">↗</span>
@@ -888,6 +994,7 @@
             <div>
               ${isZw ? '<span class="inline-flex items-center px-1.5 py-0.2 mr-1.5 rounded bg-orange-500 text-white font-bold text-[10px] align-middle">ZERO WIRE</span>' : ''}
               <span class="font-bold ${isZw ? 'text-orange-900' : 'text-[#c8322b]'}">${escapeHtml(item.key)}</span>
+              ${envPill(item)}${epssPill(item)}
               <span class="text-slate-800 ml-1">${escapeHtml(item.desc)}</span>
             </div>
             <span class="no-print text-[10px] ${isZw ? 'text-orange-600 font-semibold' : 'text-slate-400'} shrink-0 mt-0.5">${isZw ? '查看 ↗' : '↗'}</span>
@@ -915,364 +1022,836 @@
     }
 
     // =========================================================================
-    // 3. LIVE THREAT INTELLIGENCE FETCHER (KEV + NVD + CLOUDFLARE ZERO WIRE + OSV)
+    // 3. HELPERS · SETTINGS · ASSET STORE
     // =========================================================================
-    function updateFeedStatus(elementId, state, text) {
-      const el = document.getElementById(elementId);
-      const colorMap = {
-        loading: 'bg-amber-400 animate-pulse',
-        ok: 'bg-emerald-400',
-        warn: 'bg-amber-500',
-        err: 'bg-rose-500'
-      };
-      const labels = {
-        statusKev: 'CISA KEV',
-        statusNvd: 'NVD API',
-        statusZw: 'Cloudflare Zero Wire',
-        statusOsv: 'OSV / GHSA'
-      };
-      el.innerHTML = `<span class="w-2 h-2 rounded-full ${colorMap[state]}"></span> ${labels[elementId]}: <span class="text-slate-200">${text}</span>`;
+    const $ = (id) => document.getElementById(id);
+    const _mem = {};
+    const LS = {
+      get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return (k in _mem) ? _mem[k] : d; } },
+      set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { _mem[k] = v; } }
+    };
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const tmo = (ms) => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(ms) : undefined;
+
+    // Only http(s) links are ever rendered as clickable (blocks javascript: / data: URLs from feeds)
+    function safeUrl(u, fallback = '#') {
+      try {
+        const x = new URL(String(u || ''));
+        return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : fallback;
+      } catch (e) { return fallback; }
+    }
+    function fmtDate(ms) { return ms ? new Date(ms).toISOString().slice(0, 10) : ''; }
+    function parseDate(s) { const t = Date.parse(s); return isNaN(t) ? 0 : t; }
+    function truncate(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 2) + '...' : s; }
+    function extractCves(text) {
+      const m = String(text || '').match(/CVE-\d{4}-\d{4,7}/gi) || [];
+      return [...new Set(m.map(x => x.toUpperCase()))];
+    }
+    // Inert HTML -> text (DOMParser never runs scripts / loads images, unlike element.innerHTML)
+    function htmlToText(html) {
+      if (!html) return '';
+      const doc = new DOMParser().parseFromString(String(html), 'text/html');
+      return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
     }
 
-    async function fetchCloudflareZeroWire() {
-      const targetRss = 'https://radar.cloudflare.com/security/zero-wire/rss';
-      const proxyStrategies = [
-        async () => {
-          const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetRss)}`);
-          if (!r.ok) throw new Error('allorigins failed');
-          const data = await r.json();
-          if (!data.contents) throw new Error('empty contents');
-          return parseZeroWireXml(data.contents);
-        },
-        async () => {
-          const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetRss)}`);
-          if (!r.ok) throw new Error('corsproxy failed');
-          const xmlText = await r.text();
-          return parseZeroWireXml(xmlText);
-        },
-        async () => {
-          const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetRss)}`);
-          if (!r.ok) throw new Error('rss2json failed');
-          const json = await r.json();
-          if (json.status !== 'ok' || !Array.isArray(json.items)) throw new Error('rss2json invalid');
-          return json.items.map(it => {
-            const rawDesc = stripHtml(it.description || it.content || '');
-            const cves = extractCves(`${it.title} ${rawDesc}`);
-            const urgent = /active|exploit|attention|critical|emergency|ransomware|zero-day/i.test(`${it.title} ${rawDesc}`);
-            return {
-              title: (it.title || 'Cloudflare Zero Wire Briefing').trim(),
-              link: it.link || 'https://radar.cloudflare.com/security/zero-wire',
-              description: rawDesc,
-              pubDate: it.pubDate || '',
-              cves,
-              urgent
-            };
-          });
-        }
-      ];
+    // ---- Feed catalogue (all toggleable in ⚙ settings; users can add their own RSS/Atom URLs) ----
+    const DEFAULT_FEEDS = [
+      { id: 'cisa',   name: 'CISA 公告',        url: 'https://www.cisa.gov/cybersecurity-advisories/all.xml', on: true },
+      { id: 'pan',    name: 'Palo Alto PSIRT',  url: 'https://security.paloaltonetworks.com/rss.xml', on: true },
+      { id: 'msrc',   name: 'Microsoft MSRC',   url: 'https://api.msrc.microsoft.com/update-guide/rss', on: true },
+      { id: 'fortinet', name: 'Fortinet PSIRT', url: 'https://filestore.fortinet.com/fortiguard/rss/ir.xml', on: true },
+      { id: 'cisco',  name: 'Cisco PSIRT',      url: 'https://sec.cloudapps.cisco.com/security/center/psirtrss20/CiscoSecurityAdvisory.xml', on: false },
+      { id: 'bleep',  name: 'BleepingComputer', url: 'https://www.bleepingcomputer.com/feed/', on: true },
+      { id: 'thn',    name: 'The Hacker News',  url: 'https://feeds.feedburner.com/TheHackersNews', on: true },
+      { id: 'sans',   name: 'SANS ISC',         url: 'https://isc.sans.edu/rssfeed.xml', on: false }
+    ];
+    const ZW_URLS = [
+      'https://radar.cloudflare.com/security/zero-wire/rss',
+      'https://radar.cloudflare.com/zero-wire/feed',
+      'https://radar.cloudflare.com/zero-wire/rss'
+    ];
+    const settings = Object.assign({ nvdKey: '', epss: true, windowDays: 30, feedsOn: {}, customFeeds: [] }, LS.get('cb_settings_v1', {}) || {});
+    let assets = (LS.get('cb_assets_v1', []) || []).filter(a => a && a.product);
+    function saveSettings() { LS.set('cb_settings_v1', settings); }
+    function saveAssets() { LS.set('cb_assets_v1', assets); updateAssetBadge(); }
+    function allFeeds() {
+      return DEFAULT_FEEDS.map(f => ({ ...f, on: (f.id in settings.feedsOn) ? !!settings.feedsOn[f.id] : f.on }))
+        .concat((settings.customFeeds || []).map((f, i) => ({ id: 'c' + i, name: f.name, url: f.url, on: true, custom: true })));
+    }
 
-      for (const strategy of proxyStrategies) {
-        try {
-          const items = await strategy();
-          if (items && items.length > 0) return items;
-        } catch (err) {
-          console.warn('Zero Wire proxy attempt skipped:', err.message);
-        }
+    // ---- Status chips (one per source) ----
+    function chipDefs() {
+      const d = [{ id: 'kev', name: 'CISA KEV' }, { id: 'nvd', name: 'NVD' }, { id: 'ghsa', name: 'GitHub Advisory' }, { id: 'zw', name: 'Cloudflare Zero Wire' }];
+      if (settings.epss) d.push({ id: 'epss', name: 'EPSS' });
+      allFeeds().filter(f => f.on).forEach(f => d.push({ id: 'feed_' + f.id, name: f.name }));
+      return d;
+    }
+    function renderChips() {
+      $('feedChips').innerHTML = chipDefs().map(c =>
+        `<span data-chip="${c.id}" class="flex items-center gap-1.5"><span class="chip-dot w-2 h-2 rounded-full bg-slate-500"></span>${escapeHtml(c.name)}: <span class="chip-txt text-slate-300">等待中</span></span>`).join('');
+    }
+    function setChip(id, state, text) {
+      const el = document.querySelector(`[data-chip="${id}"]`);
+      if (!el) return;
+      const cm = { idle: 'bg-slate-500', loading: 'bg-amber-400 animate-pulse', ok: 'bg-emerald-400', warn: 'bg-amber-500', err: 'bg-rose-500' };
+      el.querySelector('.chip-dot').className = 'chip-dot w-2 h-2 rounded-full ' + cm[state];
+      el.querySelector('.chip-txt').textContent = text;
+    }
+    function errText(e) {
+      if (!e) return '失败';
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') return '超时';
+      if (e.status === 403 || e.status === 429) return '限流/受限';
+      if (e.status) return 'HTTP ' + e.status;
+      return '网络/跨域受限';
+    }
+    function track(id, promise, okText) {
+      setChip(id, 'loading', '拉取中…');
+      return promise.then(v => {
+        const t = okText(v);
+        setChip(id, t.warn ? 'warn' : 'ok', t.text);
+        return v;
+      }, e => { setChip(id, 'err', errText(e)); throw e; });
+    }
+
+    // =========================================================================
+    // 4. DATA SOURCES  (KEV · NVD · GHSA · Zero Wire · vendor/news RSS · EPSS)
+    // =========================================================================
+    function httpErr(r) { const e = new Error('HTTP ' + r.status); e.status = r.status; return e; }
+    async function getJson(url, opts) { const r = await fetch(url, opts); if (!r.ok) throw httpErr(r); return r.json(); }
+
+    async function fetchKev(now) {
+      const j = await getJson('https://raw.githubusercontent.com/cisagov/kev-data/main/known_exploited_vulnerabilities.json');
+      const all = (j.vulnerabilities || []).slice().sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || ''));
+      const weekAgo = now.getTime() - 7 * 864e5;
+      const recent = all.filter(v => Date.parse(v.dateAdded + 'T00:00:00Z') >= weekAgo).length;
+      return { all, total: all.length, recent };
+    }
+
+    function nvdDate(d) { return encodeURIComponent(d.toISOString().split('.')[0] + '.000+00:00'); }
+    async function nvdRequest(qs, timeoutMs = 30000) {
+      const url = 'https://services.nvd.nist.gov/rest/json/cves/2.0?' + qs;
+      if (settings.nvdKey) {
+        try { return await getJson(url, { signal: tmo(timeoutMs), headers: { apiKey: settings.nvdKey } }); }
+        catch (e) { if (e.status) throw e; /* CORS pre-flight rejected the key header -> retry keyless */ }
       }
+      return getJson(url, { signal: tmo(timeoutMs) });
+    }
+    async function fetchNvdRecent(sev, now) {
+      const start = new Date(now.getTime() - 48 * 3600e3);
+      const j = await nvdRequest(`pubStartDate=${nvdDate(start)}&pubEndDate=${nvdDate(now)}&cvssV3Severity=${sev}&resultsPerPage=100`);
+      return { total: j.totalResults || 0, items: (j.vulnerabilities || []).map(v => v.cve) };
+    }
+    async function fetchGhsa() {
+      const arr = await getJson('https://api.github.com/advisories?type=reviewed&per_page=50&sort=published&direction=desc', { headers: { 'Accept': 'application/vnd.github+json' } });
+      return Array.isArray(arr) ? arr : [];
+    }
+
+    // ---- RSS / Atom through direct fetch first, then public CORS proxies (only public feed URLs are ever sent) ----
+    const PROXIES = [
+      t => `https://api.allorigins.win/raw?url=${encodeURIComponent(t)}`,
+      t => `https://corsproxy.io/?url=${encodeURIComponent(t)}`,
+      t => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(t)}`
+    ];
+    async function fetchFeedXml(target) {
+      const attempts = [() => target, ...PROXIES.map(p => () => p(target))];
+      let lastErr;
+      for (const mk of attempts) {
+        try {
+          const r = await fetch(mk(), { signal: tmo(10000) });
+          if (!r.ok) throw httpErr(r);
+          const t = await r.text();
+          if (/<(rss|feed|rdf:RDF)[\s>]/i.test(t)) return t;
+          throw new Error('not a feed');
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error('feed failed');
+    }
+    function parseFeedXml(xml) {
+      const doc = new DOMParser().parseFromString(xml, 'text/xml');
+      if (doc.querySelector('parsererror')) throw new Error('XML parse error');
+      return Array.from(doc.querySelectorAll('item, entry')).map(node => {
+        const g = sel => (node.querySelector(sel)?.textContent || '').trim();
+        const linkEl = node.querySelector('link');
+        const link = (linkEl?.getAttribute('href') || linkEl?.textContent || g('guid')).trim();
+        const description = htmlToText(g('description') || g('summary') || g('content'));
+        const title = htmlToText(g('title'));
+        const pubDate = parseDate(g('pubDate') || g('published') || g('updated') || g('date'));
+        return { title, link, description, pubDate };
+      }).filter(i => i.title);
+    }
+    async function fetchFeed(urls) {
+      const list = Array.isArray(urls) ? urls : [urls];
+      let lastErr;
+      for (const u of list) {
+        try {
+          const items = parseFeedXml(await fetchFeedXml(u));
+          if (items.length) return items;
+        } catch (e) { lastErr = e; }
+      }
+      if (lastErr) throw lastErr;
       return [];
     }
-
-    function parseZeroWireXml(xmlString) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(xmlString, 'text/xml');
-      const itemNodes = Array.from(doc.querySelectorAll('item, entry'));
-      return itemNodes.map(node => {
-        const title = (node.querySelector('title')?.textContent || '').trim();
-        const linkEl = node.querySelector('link');
-        const link = (linkEl?.getAttribute('href') || linkEl?.textContent || 'https://radar.cloudflare.com/security/zero-wire').trim();
-        const descRaw = node.querySelector('description, summary, content')?.textContent || '';
-        const description = stripHtml(descRaw);
-        const pubDate = (node.querySelector('pubDate, updated, published')?.textContent || '').trim();
-        const categories = Array.from(node.querySelectorAll('category')).map(c => c.textContent.trim()).join(' ');
-        const cves = extractCves(`${title} ${description}`);
-        const urgent = /active|exploit|attention|critical|emergency|ransomware|zero-day/i.test(`${title} ${description} ${categories}`);
-        return {
-          title,
-          link,
-          description,
-          pubDate,
-          cves,
-          urgent
-        };
-      }).filter(item => item.title);
+    // "No source reports exploitation in the wild" must NOT be treated as urgent
+    function isUrgentText(t) {
+      if (/\bno (source|evidence|report)[^.]{0,80}exploit/i.test(t)) return false;
+      return /active(ly)? exploit|exploited in the wild|zero[- ]day|ransomware|emergency|needs attention/i.test(t);
     }
 
-    function extractCves(text) {
-      const matches = text.match(/CVE-\d{4}-\d{4,7}/gi) || [];
-      return [...new Set(matches.map(m => m.toUpperCase()))];
+    // ---- EPSS enrichment (exploit probability, FIRST.org) ----
+    const epssCache = new Map();
+    async function enrichEpss(cveIds) {
+      if (!settings.epss) return;
+      const need = [...new Set(cveIds.filter(c => /^CVE-\d{4}-\d+$/i.test(c)).map(c => c.toUpperCase()))].filter(c => !epssCache.has(c));
+      if (!need.length) { return; }
+      setChip('epss', 'loading', '查询中…');
+      try {
+        for (let i = 0; i < need.length; i += 60) {
+          const chunk = need.slice(i, i + 60);
+          const j = await getJson('https://api.first.org/data/v1/epss?cve=' + chunk.join(','), { signal: tmo(15000) });
+          (j.data || []).forEach(d => epssCache.set(String(d.cve).toUpperCase(), parseFloat(d.epss)));
+          chunk.forEach(c => { if (!epssCache.has(c)) epssCache.set(c, null); });
+        }
+        setChip('epss', 'ok', `已评分 ${[...epssCache.values()].filter(v => v !== null).length} 枚`);
+      } catch (e) { setChip('epss', 'err', errText(e)); }
+    }
+    function epssFor(refs) {
+      let best = null;
+      (refs || []).forEach(r => { const v = epssCache.get(String(r).toUpperCase()); if (typeof v === 'number' && (best === null || v > best)) best = v; });
+      return best;
     }
 
-    function stripHtml(html) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
+    // =========================================================================
+    // 5. INTEL POOL  (normalised records used for matching against YOUR assets)
+    // =========================================================================
+    let intel = { kev: [], nvd: [], ghsa: [], zw: [], feeds: [] };
+    const deepPool = new Map();
+
+    function kevToItem(k) {
+      return { src: 'CISA KEV', kind: 'kev', id: k.cveID, cves: [k.cveID], vendor: k.vendorProject || '', product: k.product || '',
+        title: `${k.vendorProject || ''} ${k.product || ''} — ${k.vulnerabilityName || ''}`.trim(), desc: k.shortDescription || '',
+        date: Date.parse((k.dateAdded || '') + 'T00:00:00Z') || 0, kev: true, url: `https://nvd.nist.gov/vuln/detail/${k.cveID}` };
+    }
+    function nvdToItem(cve) {
+      const m = cve.metrics || {};
+      const md = m.cvssMetricV40?.[0]?.cvssData || m.cvssMetricV31?.[0]?.cvssData || m.cvssMetricV30?.[0]?.cvssData || m.cvssMetricV2?.[0]?.cvssData || {};
+      const score = (typeof md.baseScore === 'number') ? md.baseScore : null;
+      const dobj = (cve.descriptions || []).find(d => d.lang === 'en') || cve.descriptions?.[0];
+      const desc = dobj ? dobj.value : '';
+      const cpes = [];
+      (cve.configurations || []).forEach(cfg => (cfg.nodes || []).forEach(n => (n.cpeMatch || []).forEach(cm => {
+        if (cm.vulnerable === false) return;
+        const p = String(cm.criteria || '').split(':');
+        if (p.length < 6) return;
+        cpes.push({ vendor: p[3], product: p[4], version: p[5], vsi: cm.versionStartIncluding, vse: cm.versionStartExcluding, vei: cm.versionEndIncluding, vee: cm.versionEndExcluding });
+      })));
+      return { src: 'NVD', kind: 'nvd', id: cve.id, cves: [cve.id], vendor: cpes[0]?.vendor || '', product: '', cpes, score,
+        title: truncate(desc, 140), desc, fullDesc: desc, date: parseDate(cve.published), url: `https://nvd.nist.gov/vuln/detail/${cve.id}` };
+    }
+    function ghsaToItem(v) {
+      return { src: 'GHSA', kind: 'ghsa', id: v.ghsa_id, cves: v.cve_id ? [v.cve_id.toUpperCase()] : [], severity: v.severity,
+        pkgs: (v.vulnerabilities || []).map(x => ({ eco: x.package?.ecosystem || '', name: x.package?.name || '', range: x.vulnerable_version_range || '',
+          fixed: (typeof x.first_patched_version === 'string') ? x.first_patched_version : (x.first_patched_version?.identifier || '') })),
+        title: v.summary || '', desc: v.description || v.summary || '', date: parseDate(v.published_at), url: v.html_url || 'https://github.com/advisories' };
+    }
+    function feedToItem(it, srcName, kind) {
+      return { src: srcName, kind, id: it.link || it.title, cves: extractCves(`${it.title} ${it.description}`),
+        title: it.title, desc: it.description, date: it.pubDate, url: safeUrl(it.link, 'https://radar.cloudflare.com/security/zero-wire'),
+        urgent: isUrgentText(`${it.title} ${it.description}`) };
     }
 
+    // ---- Version & text matching ----
+    function normTxt(s) { return ' ' + String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' '; }
+    function assetNeedles(a) {
+      return [a.product, ...String(a.keywords || '').split(/[;|,，；]/)].map(x => x.trim()).filter(Boolean)
+        .map(normTxt).filter(n => n.trim().length >= 2);
+    }
+    function verParts(v) { return String(v).toLowerCase().replace(/^v/, '').split(/[.\-_+\s]+/).filter(Boolean).map(x => /^\d+$/.test(x) ? parseInt(x, 10) : x); }
+    function cmpVer(a, b) {
+      const A = verParts(a), B = verParts(b), n = Math.max(A.length, B.length);
+      for (let i = 0; i < n; i++) {
+        const x = A[i] ?? 0, y = B[i] ?? 0;
+        if (x === y) continue;
+        if (typeof x === 'number' && typeof y === 'number') return x < y ? -1 : 1;
+        return String(x).localeCompare(String(y), undefined, { numeric: true });
+      }
+      return 0;
+    }
+    function cpeVerMatch(ver, cp) {
+      if (cp.vsi || cp.vse || cp.vei || cp.vee) {
+        if (cp.vsi && cmpVer(ver, cp.vsi) < 0) return false;
+        if (cp.vse && cmpVer(ver, cp.vse) <= 0) return false;
+        if (cp.vei && cmpVer(ver, cp.vei) > 0) return false;
+        if (cp.vee && cmpVer(ver, cp.vee) >= 0) return false;
+        return true;
+      }
+      if (cp.version === '*' || cp.version === '-' || !cp.version) return true;
+      return cmpVer(ver, cp.version.replace(/_/g, '.')) === 0;
+    }
+    function cpeRangeText(cp) {
+      const parts = [];
+      if (cp.vsi) parts.push('≥' + cp.vsi); if (cp.vse) parts.push('>' + cp.vse);
+      if (cp.vei) parts.push('≤' + cp.vei); if (cp.vee) parts.push('<' + cp.vee);
+      if (parts.length) return parts.join(' 且 ');
+      return (cp.version === '*' || cp.version === '-') ? '全部版本' : '= ' + cp.version;
+    }
+    function ghsaRangeMatch(ver, range) {
+      const parts = String(range || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (!parts.length) return null; // unknown
+      for (const p of parts) {
+        const m = p.match(/^(<=|>=|<|>|=)\s*(.+)$/);
+        if (!m) return null;
+        const c = cmpVer(ver, m[2]);
+        if (m[1] === '<' && !(c < 0)) return false;
+        if (m[1] === '<=' && !(c <= 0)) return false;
+        if (m[1] === '>' && !(c > 0)) return false;
+        if (m[1] === '>=' && !(c >= 0)) return false;
+        if (m[1] === '=' && c !== 0) return false;
+      }
+      return true;
+    }
+
+    // Returns null | {level:'confirmed'|'product'|'mention'|'excluded', evidence}
+    function matchItem(item, a) {
+      const needles = assetNeedles(a);
+      if (!needles.length) return null;
+      const ver = String(a.version || '').trim();
+      const vendorOk = (n, hay) => n.trim().length >= 4 || (a.vendor && hay.includes(normTxt(a.vendor)));
+      // free text: needle appears as whole words
+      const hit = (hay) => needles.some(n => hay.includes(n) && vendorOk(n, hay));
+      // structured product field: equal / word-prefix either way (avoids 'nginx' matching 'ingress-nginx')
+      const structHit = (prod, vendorHay) => needles.some(n => (prod === n || prod.startsWith(n) || n.startsWith(prod)) && vendorOk(n, prod + vendorHay));
+
+      // 1) NVD CPE configuration (precise: vendor/product + version ranges)
+      if (item.cpes && item.cpes.length) {
+        const rel = item.cpes.filter(cp => structHit(normTxt(cp.product), normTxt(cp.vendor)));
+        if (rel.length) {
+          if (ver) {
+            const ok = rel.find(cp => cpeVerMatch(ver, cp));
+            if (ok) return { level: 'confirmed', evidence: `NVD CPE：${ok.vendor}/${ok.product} 受影响 ${cpeRangeText(ok)}，你的版本 ${ver} 在范围内` };
+            return { level: 'excluded' };
+          }
+          return { level: 'product', evidence: `NVD CPE 产品匹配（${rel[0].vendor}/${rel[0].product} ${cpeRangeText(rel[0])}）；资产未填版本，请核对` };
+        }
+      }
+      // 2) GitHub advisory package
+      if (item.pkgs && item.pkgs.length) {
+        const rel = item.pkgs.filter(p => structHit(normTxt(p.name), ''));
+        if (rel.length) {
+          if (ver) {
+            const r = rel.map(p => ghsaRangeMatch(ver, p.range));
+            if (r.includes(true)) { const p = rel[r.indexOf(true)]; return { level: 'confirmed', evidence: `GHSA ${p.eco}:${p.name} 受影响 ${p.range}${p.fixed ? '，修复版本 ' + p.fixed : ''}，你的版本 ${ver} 在范围内` }; }
+            if (r.every(x => x === false)) return { level: 'excluded' };
+          }
+          return { level: 'product', evidence: `GHSA 包名匹配（${rel[0].eco}:${rel[0].name} ${rel[0].range || ''}）；请核对版本` };
+        }
+      }
+      // 3) CISA KEV structured vendor/product
+      if (item.kind === 'kev') {
+        if (structHit(normTxt(item.product), normTxt(item.vendor))) {
+          return { level: 'product', evidence: `CISA KEV 在野利用：${item.vendor} / ${item.product}（KEV 不含版本范围，请对照厂商公告确认版本）` };
+        }
+      }
+      // 4) Free-text mention (news, vendor RSS, Zero Wire, NVD description) — skipped when the record has precise structured data that did not match
+      if (item.kind === 'kev' || (item.cpes && item.cpes.length)) return null;
+      if (hit(normTxt(item.title + ' ' + item.desc))) {
+        return { level: 'mention', evidence: `标题/摘要中提到你的资产关键词（${a.product}），需人工确认是否受影响` };
+      }
+      return null;
+    }
+
+    // =========================================================================
+    // 6. ENVIRONMENT IMPACT ENGINE
+    // =========================================================================
+    const LEVEL_RANK = { confirmed: 3, product: 2, mention: 1 };
+    const LEVEL_META = {
+      confirmed: { label: '确认受影响', cls: 'bg-red-600 text-white' },
+      product:   { label: '产品匹配·需核对版本', cls: 'bg-amber-500 text-white' },
+      mention:   { label: '情报提及·需确认', cls: 'bg-slate-500 text-white' }
+    };
+    let envRows = [], envIndex = new Map(), envMeta = { excluded: 0, scanned: 0 };
+
+    function computeEnv() {
+      envRows = []; envIndex = new Map(); envMeta = { excluded: 0, scanned: 0 };
+      if (!assets.length) return;
+      const cutoff = settings.windowDays > 0 ? Date.now() - settings.windowDays * 864e5 : 0;
+      const pool = [...intel.kev, ...intel.nvd, ...intel.ghsa, ...intel.zw, ...intel.feeds, ...deepPool.values()];
+      const byKey = new Map(), excludedKeys = new Set();
+      for (const item of pool) {
+        if (cutoff && item.date && item.date < cutoff) continue;
+        envMeta.scanned++;
+        for (const a of assets) {
+          const m = matchItem(item, a);
+          if (!m) continue;
+          const key = (item.cves[0] || item.id) + '|' + a.id;
+          if (m.level === 'excluded') { excludedKeys.add(key); continue; }
+          let row = byKey.get(key);
+          if (!row) {
+            row = { key, asset: a, level: m.level, ids: new Set(), cves: [], sources: new Set(), evidence: [], title: item.title, url: item.url, date: item.date, kev: false, score: 0 };
+            byKey.set(key, row);
+          }
+          if (LEVEL_RANK[m.level] > LEVEL_RANK[row.level]) row.level = m.level;
+          item.cves.forEach(c => { row.ids.add(c); if (!row.cves.includes(c)) row.cves.push(c); });
+          row.ids.add(item.id); row.sources.add(item.src);
+          if (!row.evidence.includes(m.evidence)) row.evidence.push(m.evidence);
+          if (item.kev) row.kev = true;
+          if (item.score && item.score > row.score) row.score = item.score;
+          if (item.date && item.date > row.date) row.date = item.date;
+          if (item.kind === 'kev' || (item.kind === 'nvd' && row.title === '')) { row.title = item.title; }
+        }
+      }
+      // A precise NVD/GHSA "version not affected" verdict overrides a coarse product-level hit for the same CVE+asset
+      envMeta.excluded = excludedKeys.size;
+      envRows = [...byKey.values()].filter(r => !(excludedKeys.has(r.key) && r.level !== 'confirmed'));
+      envRows.sort((x, y) => (LEVEL_RANK[y.level] - LEVEL_RANK[x.level]) || ((y.kev ? 1 : 0) - (x.kev ? 1 : 0)) ||
+        ((epssFor(y.cves) || 0) - (epssFor(x.cves) || 0)) || (y.score - x.score) || (y.date - x.date));
+      envRows.forEach(r => r.ids.forEach(id => { if (!envIndex.has(id)) envIndex.set(id, []); envIndex.get(id).push(r); }));
+    }
+    function envTagFor(refs) {
+      if (!refs || !refs.length || !envRows.length) return [];
+      const out = new Set();
+      refs.forEach(r => (envIndex.get(r) || []).forEach(row => { if (row.level !== 'mention') out.add(row); }));
+      return [...out];
+    }
+    function envPill(item) {
+      const rows = envTagFor(item.refs);
+      if (!rows.length) return '';
+      const names = [...new Set(rows.map(r => r.asset.product))].slice(0, 2).join(' / ');
+      const confirmed = rows.some(r => r.level === 'confirmed');
+      return `<span class="px-1.5 py-0.5 rounded ${confirmed ? 'bg-red-600' : 'bg-amber-500'} text-white font-bold text-[10px] align-middle" title="命中你的资产清单">🎯 ${confirmed ? '影响你的资产' : '可能影响'}：${escapeHtml(names)}</span>`;
+    }
+    function epssPill(item) {
+      const e = epssFor(item.refs);
+      if (e === null) return '';
+      const cls = e >= 0.5 ? 'bg-red-100 text-red-700' : e >= 0.1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600';
+      return `<span class="px-1.5 py-0.5 rounded ${cls} font-bold text-[10px] align-middle" title="EPSS：未来30天被利用的概率">EPSS ${(e * 100).toFixed(1)}%</span>`;
+    }
+
+    function setWindowDays(v) {
+      settings.windowDays = parseInt(v, 10) || 0; saveSettings();
+      computeEnv(); renderBriefing(); renderEnvPanel(); renderFeedPanel();
+    }
+    function levelBadge(l) { const m = LEVEL_META[l]; return `<span class="shrink-0 px-2 py-0.5 rounded-md ${m.cls} text-[10px] font-bold whitespace-nowrap">${m.label}</span>`; }
+
+    function envRowHtml(r) {
+      const e = epssFor(r.cves);
+      return `
+        <div class="flex items-start gap-2.5 py-2.5 border-t border-slate-100 first:border-t-0">
+          ${levelBadge(r.level)}
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-slate-900 text-[13px] leading-snug">${r.cves.length ? `<span class="text-[#c8322b]">${escapeHtml(r.cves.slice(0, 3).join(' · '))}</span> ` : ''}${escapeHtml(truncate(r.cves.length && r.title.toUpperCase().includes(r.cves[0]) ? r.title.replace(new RegExp(r.cves[0] + '[:\\s-]*', 'i'), '') : r.title, 150))}</div>
+            <div class="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+              <span>${escapeHtml([...r.sources].join(' + '))}</span>
+              ${r.kev ? '<span class="font-bold text-red-600">KEV 在野利用</span>' : ''}
+              ${r.score ? `<span>CVSS ${r.score.toFixed(1)}</span>` : ''}
+              ${e !== null ? `<span>EPSS ${(e * 100).toFixed(1)}%</span>` : ''}
+              ${r.date ? `<span>${fmtDate(r.date)}</span>` : ''}
+            </div>
+            <div class="text-xs text-slate-600 mt-1">${escapeHtml(r.evidence[0] || '')}</div>
+          </div>
+          <a href="${escapeHtml(safeUrl(r.url))}" target="_blank" rel="noopener noreferrer" class="shrink-0 text-[11px] text-sky-600 hover:underline">原文 ↗</a>
+        </div>`;
+    }
+
+    function renderEnvPanel() {
+      const el = $('envPanel');
+      if (dataSource !== 'live') { el.style.display = 'none'; return; }
+      el.style.display = '';
+      const winSel = `<select onchange="setWindowDays(this.value)" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs">
+        ${[[7, '近 7 天'], [30, '近 30 天'], [90, '近 90 天'], [180, '近 180 天'], [0, '全部']].map(([v, t]) => `<option value="${v}" ${settings.windowDays === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+      const head = `
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🏢</span>
+            <h2 class="font-bold text-slate-900 text-base">我的环境影响评估</h2>
+            <span class="text-xs text-slate-400">仅在本浏览器内比对，资产清单不会上传</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            ${assets.length ? winSel : ''}
+            <button onclick="openAssetModal('assets')" class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">${assets.length ? '管理资产' : '+ 添加资产'}</button>
+            ${assets.length ? `<button id="btnDeepScan" onclick="deepScanNvd()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold" title="按每个资产去 NVD 做关键词检索（会把产品名发送给 NVD）">🔍 深度扫描 NVD</button>` : ''}
+          </div>
+        </div>`;
+      let body = '';
+      if (!assets.length) {
+        body = `<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+          还没有资产清单。添加你环境里的产品（例如厂商、产品名、版本），页面会自动比对上方情报，告诉你<b>哪些漏洞可能影响你</b>。
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button onclick="openAssetModal('assets')" class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">手动添加 / 导入 CSV</button>
+          </div></div>`;
+      } else {
+        const cnt = { confirmed: 0, product: 0, mention: 0 };
+        envRows.forEach(r => cnt[r.level]++);
+        const pills = `
+          <div class="flex flex-wrap gap-2 mb-3 text-xs">
+            <span class="px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 font-semibold">确认受影响 ${cnt.confirmed}</span>
+            <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold">产品匹配·需核对 ${cnt.product}</span>
+            <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-semibold">情报提及 ${cnt.mention}</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">版本不在范围已排除 ${envMeta.excluded}</span>
+            <span class="px-2.5 py-1 rounded-full bg-white text-slate-500 border border-slate-200">已比对 ${envMeta.scanned} 条情报 × ${assets.length} 项资产</span>
+          </div>`;
+        const groups = assets.map(a => ({ a, rows: envRows.filter(r => r.asset.id === a.id) }));
+        const hit = groups.filter(g => g.rows.length), clean = groups.filter(g => !g.rows.length);
+        let list = '';
+        hit.forEach(g => {
+          const top = g.rows.slice(0, 5), rest = g.rows.slice(5);
+          list += `<div class="rounded-2xl border border-slate-200 mb-3 overflow-hidden">
+            <div class="bg-slate-50 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+              <div class="font-bold text-slate-800 text-sm">${escapeHtml([g.a.vendor, g.a.product, g.a.version].filter(Boolean).join(' '))}${g.a.note ? `<span class="ml-2 text-xs font-normal text-slate-400">${escapeHtml(g.a.note)}</span>` : ''}</div>
+              <div class="text-xs text-slate-500">${g.rows.length} 条相关情报</div></div>
+            <div class="px-4">${top.map(envRowHtml).join('')}${rest.length ? `<details class="py-1"><summary class="cursor-pointer text-xs text-sky-600 py-1.5">展开其余 ${rest.length} 条</summary>${rest.map(envRowHtml).join('')}</details>` : ''}</div></div>`;
+        });
+        if (!hit.length) {
+          list = `<div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">✅ ${settings.windowDays ? `近 ${settings.windowDays} 天` : '已加载'}的情报中，没有发现与你的 ${assets.length} 项资产相关的条目。</div>`;
+        } else if (clean.length) {
+          list += `<div class="text-xs text-slate-500">✅ 暂未发现相关情报的资产：${clean.map(g => escapeHtml(g.a.product + (g.a.version ? ' ' + g.a.version : ''))).join('、')}</div>`;
+        }
+        body = pills + list + `<p class="text-[11px] text-slate-400 mt-3 leading-relaxed">说明：比对基于产品名/别名与版本范围（NVD CPE、GitHub Advisory 提供版本时才能精确判断）。「产品匹配」「情报提及」只表示可能相关，请以厂商公告为准。NVD 新条目的 CPE 常有分析延迟；可用「深度扫描 NVD」按资产补充检索。</p>`;
+      }
+      $('envPanelInner').innerHTML = head + body;
+    }
+
+    // =========================================================================
+    // 7. VENDOR ADVISORIES & NEWS PANEL (feeds)
+    // =========================================================================
+    let feedFilter = 'all', feedQuery = '', feedLimit = 30;
+    function setFeedFilter(f) { feedFilter = f; feedLimit = 30; renderFeedPanel(); }
+    function setFeedQuery(q) { feedQuery = q; feedLimit = 30; renderFeedPanel(true); }
+    function moreFeed() { feedLimit += 30; renderFeedPanel(); }
+    function renderFeedPanel(keepFocus) {
+      const el = $('feedPanel');
+      const all = [...intel.zw, ...intel.feeds].sort((a, b) => (b.date || 0) - (a.date || 0));
+      if (dataSource !== 'live' || !all.length) { el.style.display = 'none'; return; }
+      el.style.display = '';
+      const counts = {}; all.forEach(i => { counts[i.src] = (counts[i.src] || 0) + 1; });
+      const q = feedQuery.trim().toLowerCase();
+      let list = all.filter(i => (feedFilter === 'all' || i.src === feedFilter) && (!q || (i.title + ' ' + i.desc + ' ' + i.cves.join(' ')).toLowerCase().includes(q)));
+      const total = list.length;
+      list = list.slice(0, feedLimit);
+      const chip = (id, label, n) => `<button onclick="setFeedFilter(${JSON.stringify(id).replace(/"/g, '&quot;')})" class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${feedFilter === id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}">${escapeHtml(label)} <span class="opacity-60">${n}</span></button>`;
+      $('feedPanelInner').innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2"><span class="text-lg">📡</span><h2 class="font-bold text-slate-900 text-base">厂商公告与安全新闻</h2><span class="text-xs text-slate-400">共 ${all.length} 条</span></div>
+          <input id="feedSearch" value="${escapeHtml(feedQuery)}" oninput="setFeedQuery(this.value)" placeholder="搜索 CVE / 产品 / 关键词" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs w-56" />
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-3">${chip('all', '全部', all.length)}${Object.keys(counts).map(s => chip(s, s, counts[s])).join('')}</div>
+        <div>${list.map(i => {
+          const rows = (envIndex.get(i.id) || []).concat(...i.cves.map(c => envIndex.get(c) || []));
+          const best = rows.sort((a, b) => LEVEL_RANK[b.level] - LEVEL_RANK[a.level])[0];
+          const names = [...new Set(rows.map(r => r.asset.product))].slice(0, 2).join(' / ');
+          return `<a href="${escapeHtml(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer" class="block py-2.5 border-t border-slate-100 first:border-t-0 hover:bg-slate-50 px-2 rounded-lg">
+            <div class="flex items-start gap-2">
+              <span class="shrink-0 px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-bold text-[10px] mt-0.5">${escapeHtml(i.src)}</span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-semibold text-slate-900 leading-snug">${escapeHtml(truncate(i.title, 160))} ${best ? `<span class="px-1.5 py-0.5 rounded ${best.level === 'confirmed' ? 'bg-red-600' : best.level === 'product' ? 'bg-amber-500' : 'bg-slate-500'} text-white font-bold text-[10px] align-middle">🎯 ${escapeHtml(names)}</span>` : ''}</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">${fmtDate(i.date)}${i.cves.length ? ' · ' + escapeHtml(i.cves.slice(0, 3).join(' · ')) : ''}</div>
+              </div></div></a>`;
+        }).join('') || '<div class="text-xs text-slate-400 py-4 text-center">没有匹配的条目</div>'}</div>
+        ${total > feedLimit ? `<div class="text-center mt-3"><button onclick="moreFeed()" class="px-4 py-1.5 rounded-xl border border-slate-300 text-xs text-slate-600 hover:bg-slate-50">显示更多（还有 ${total - feedLimit} 条）</button></div>` : ''}`;
+      if (keepFocus) { const s = $('feedSearch'); if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); } }
+    }
+
+    // =========================================================================
+    // 8. MAIN LIVE-INTEL PIPELINE (runs automatically on first load)
+    // =========================================================================
+    let isFetching = false;
     async function fetchAllLiveIntel(isAuto = false) {
+      if (isFetching) return;
+      isFetching = true;
+      const btn = $('btnFetchLive'), spinner = $('fetchSpinner'), icon = $('fetchIcon'), btnText = $('btnFetchText');
+      btn.disabled = true; spinner.classList.remove('hidden'); icon.classList.add('hidden');
+      btnText.textContent = '正在采集情报...';
       if (dataSource === 'none') showLoadingPanel('loading');
-      const btn = document.getElementById('btnFetchLive');
-      const spinner = document.getElementById('fetchSpinner');
-      const icon = document.getElementById('fetchIcon');
-      const btnText = document.getElementById('btnFetchText');
+      renderChips();
 
-      btn.disabled = true;
-      spinner.classList.remove('hidden');
-      icon.classList.add('hidden');
-      btnText.textContent = '正在采集四源情报...';
-
-      updateFeedStatus('statusKev', 'loading', '拉取中...');
-      updateFeedStatus('statusNvd', 'loading', '拉取中...');
-      updateFeedStatus('statusZw', 'loading', '拉取 RSS...');
-      updateFeedStatus('statusOsv', 'loading', '拉取中...');
-
-      // Get today's formatted date
       const now = new Date();
       const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const todayShort = `${yyyy}-${mm}-${dd}`;
+      const todayShort = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const todayFull = `${todayShort} · ${weekdays[now.getDay()]}`;
 
-      let kevList = [];
-      let nvdList = [];
-      let zwList = [];
-      let osvList = [];
-      let kevRecent = 0;
+      const feeds = allFeeds().filter(f => f.on);
+      const tasks = [
+        track('kev', fetchKev(now), v => ({ text: `${v.recent} 条近7天 / 共 ${v.total}` })),
+        track('nvd', Promise.allSettled([fetchNvdRecent('CRITICAL', now), fetchNvdRecent('HIGH', now)]).then(rs => {
+          const ok = rs.filter(r => r.status === 'fulfilled').map(r => r.value);
+          if (!ok.length) throw rs[0].reason;
+          return { total: ok.reduce((s, x) => s + x.total, 0), items: ok.flatMap(x => x.items), partial: ok.length < rs.length };
+        }), v => ({ text: `近48h 高危+严重 ${v.total} 枚${v.partial ? '（部分）' : ''}`, warn: v.partial })),
+        track('ghsa', fetchGhsa(), v => ({ text: `${v.length} 条公告` })),
+        track('zw', fetchFeed(ZW_URLS).then(items => items.map(i => feedToItem(i, 'Zero Wire', 'zw'))), v => v.length ? ({ text: `${v.length} 条简报` }) : ({ text: '暂无数据', warn: true })),
+        ...feeds.map(f => track('feed_' + f.id, fetchFeed(f.url).then(items => items.slice(0, 40).map(i => feedToItem(i, f.name, 'feed'))), v => ({ text: `${v.length} 条` })))
+      ];
+      const results = await Promise.allSettled(tasks);
+      const val = (i) => results[i].status === 'fulfilled' ? results[i].value : null;
+      const kev = val(0), nvd = val(1), ghsaRaw = val(2), zwItems = val(3) || [];
+      const feedItems = results.slice(4).flatMap(r => r.status === 'fulfilled' ? r.value : []);
 
-      // Run all 4 threat intelligence fetches concurrently
-      const [kevResObj, nvdResObj, zwResObj, osvResObj] = await Promise.allSettled([
-        // 1) CISA KEV
-        (async () => {
-          const kevRes = await fetch('https://raw.githubusercontent.com/cisagov/kev-data/main/known_exploited_vulnerabilities.json');
-          if (!kevRes.ok) throw new Error('KEV HTTP error');
-          const kevJson = await kevRes.json();
-          const vulns = kevJson.vulnerabilities || [];
-          vulns.sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || ''));
-          const weekAgo = now.getTime() - 7 * 24 * 3600 * 1000;
-          const recentCount = vulns.filter(v => new Date(v.dateAdded + 'T00:00:00Z').getTime() >= weekAgo).length;
-          return { total: vulns.length, items: vulns.slice(0, 6), recentCount };
-        })(),
+      const kevList = kev ? kev.all.slice(0, 6) : [];
+      const nvdRaw = nvd ? nvd.items : [];
+      const gotAny = kevList.length || nvdRaw.length || zwItems.length || (ghsaRaw && ghsaRaw.length) || feedItems.length;
 
-        // 2) NVD CVE 2.0 API (last 48h)
-        (async () => {
-          const pastDate = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-          const pubStart = pastDate.toISOString().split('.')[0] + '.000';
-          const pubEnd = now.toISOString().split('.')[0] + '.000';
-          const nvdUrl = `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=${encodeURIComponent(pubStart)}&pubEndDate=${encodeURIComponent(pubEnd)}&resultsPerPage=100`;
-          const nvdRes = await fetch(nvdUrl);
-          if (!nvdRes.ok) throw new Error('NVD HTTP error');
-          const nvdJson = await nvdRes.json();
-          return {
-            total: nvdJson.totalResults || (nvdJson.vulnerabilities || []).length,
-            items: (nvdJson.vulnerabilities || []).map(v => v.cve)
-          };
-        })(),
+      if (gotAny) {
+        // ---------- normalised pool for environment matching ----------
+        intel = {
+          kev: kev ? kev.all.map(kevToItem) : [],
+          nvd: nvdRaw.map(nvdToItem),
+          ghsa: (ghsaRaw || []).map(ghsaToItem),
+          zw: zwItems,
+          feeds: feedItems
+        };
+        const nvdItems = intel.nvd.filter(c => c.score !== null && c.score >= 7.0).sort((a, b) => b.score - a.score);
+        const zwCveSet = new Set(zwItems.flatMap(z => z.cves));
 
-        // 3) Cloudflare Radar Zero Wire RSS
-        fetchCloudflareZeroWire(),
-
-        // 4) GitHub Advisory Database (latest reviewed critical/high advisories)
-        (async () => {
-          const r = await fetch('https://api.github.com/advisories?type=reviewed&severity=critical&per_page=6&sort=published&direction=desc', {
-            headers: { 'Accept': 'application/vnd.github+json' }
-          });
-          if (!r.ok) throw new Error('GHSA HTTP error');
-          const arr = await r.json();
-          return Array.isArray(arr) ? arr : [];
-        })()
-      ]);
-
-      if (kevResObj.status === 'fulfilled') {
-        kevList = kevResObj.value.items;
-        kevRecent = kevResObj.value.recentCount;
-        updateFeedStatus('statusKev', 'ok', `已获取 (${kevResObj.value.total} 总库)`);
-      } else {
-        updateFeedStatus('statusKev', 'err', '获取失败');
-      }
-
-      if (nvdResObj.status === 'fulfilled') {
-        nvdList = nvdResObj.value.items;
-        updateFeedStatus('statusNvd', 'ok', `已获取 (${nvdResObj.value.total} 枚)`);
-      } else {
-        updateFeedStatus('statusNvd', 'err', '获取失败 / 限流');
-      }
-
-      if (zwResObj.status === 'fulfilled' && zwResObj.value.length > 0) {
-        zwList = zwResObj.value;
-        updateFeedStatus('statusZw', 'ok', `已获取 (${zwList.length} 条简报)`);
-      } else {
-        updateFeedStatus('statusZw', 'warn', '暂无数据');
-      }
-
-      if (osvResObj.status === 'fulfilled') {
-        osvList = osvResObj.value;
-        updateFeedStatus('statusOsv', 'ok', `已获取 (${osvList.length} 条公告)`);
-      } else {
-        updateFeedStatus('statusOsv', 'err', '获取失败 / 限流');
-      }
-
-      // Build unified live briefing if we retrieved real records from any feed
-      if (kevList.length > 0 || nvdList.length > 0 || zwList.length > 0) {
-        const newP0Alerts = [];
-        const vendorsHighlight = [];
-        const zwCveSet = new Set(zwList.flatMap(z => z.cves));
-
-        // 1) Map top 4 KEV entries into P0 cards (cross-referenced with Zero Wire)
+        // ---------- Card 2: P0 ----------
+        const newP0Alerts = [], vendorsHighlight = [];
         kevList.slice(0, 4).forEach(k => {
           vendorsHighlight.push(k.vendorProject || 'Vendor');
           const matchedZw = zwCveSet.has((k.cveID || '').toUpperCase());
           newP0Alerts.push({
-            vendor: k.vendorProject || 'Vendor',
-            cve: k.cveID,
-            badge: matchedZw ? 'KEV + ZW' : 'KEV',
-            isKev: true,
-            isZeroWire: matchedZw,
+            vendor: k.vendorProject || 'Vendor', cve: k.cveID, refs: [k.cveID], badge: matchedZw ? 'KEV + ZW' : 'KEV', isKev: true, isZeroWire: matchedZw,
             title: `${k.product || ''} — ${k.vulnerabilityName || '已知在野利用高危漏洞'}`,
             action: k.requiredAction || '立即依据厂商公告应用安全补丁并排查入侵痕迹',
             summary: k.shortDescription || `${k.vendorProject} ${k.product} 存在已知在野利用漏洞 (${k.cveID})。`,
             url: matchedZw ? 'https://radar.cloudflare.com/security/zero-wire' : `https://nvd.nist.gov/vuln/detail/${k.cveID}`
           });
         });
-
-        // 2) Surface urgent Cloudflare Zero Wire items into Card 2 P0 Alerts
-        zwList.filter(z => z.urgent || z.cves.length > 0).slice(0, 2).forEach(z => {
-          const primaryCve = z.cves[0] || 'ZERO-WIRE';
-          if (!newP0Alerts.some(existing => existing.cve === primaryCve)) {
-            newP0Alerts.push({
-              vendor: 'Cloudflare Zero Wire',
-              cve: primaryCve,
-              badge: 'ZERO WIRE',
-              isKev: false,
-              isZeroWire: true,
-              title: z.title,
-              action: '核查受影响资产暴露面并参照 Cloudflare Zero Wire 缓解建议处置',
-              summary: z.description || z.title,
-              url: z.link || 'https://radar.cloudflare.com/security/zero-wire'
-            });
-          }
+        zwItems.filter(z => z.urgent).slice(0, 2).forEach(z => {
+          if (newP0Alerts.some(e => (z.cves[0] && e.cve === z.cves[0]) || e.url === z.url)) return;
+          newP0Alerts.push({
+            vendor: 'Cloudflare Zero Wire', cve: z.cves[0] || 'ZERO WIRE', refs: [z.id, ...z.cves], badge: 'ZERO WIRE', isKev: false, isZeroWire: true,
+            title: z.title, action: '核查受影响资产暴露面并参照 Cloudflare Zero Wire 缓解建议处置', summary: z.desc || z.title, url: z.url
+          });
         });
-
-        // 3) Extract top CVSS >= 9.0 from NVD to fill P0 & P1
-        const parsedNvd = nvdList.map(cve => {
-          const m = cve.metrics || {};
-          const metrics = m.cvssMetricV40?.[0]?.cvssData || m.cvssMetricV31?.[0]?.cvssData || m.cvssMetricV30?.[0]?.cvssData || {};
-          const score = (typeof metrics.baseScore === 'number') ? metrics.baseScore : null; // null = not scored yet
-          const descObj = (cve.descriptions || []).find(d => d.lang === 'en') || cve.descriptions?.[0];
-          const desc = descObj ? descObj.value : 'High severity vulnerability detected in NVD feed.';
-          return {
-            id: cve.id,
-            score,
-            fullDesc: desc,
-            desc: desc.length > 110 ? desc.slice(0, 108) + '...' : desc,
-            url: `https://nvd.nist.gov/vuln/detail/${cve.id}`
-          };
-        }).filter(c => c.score !== null && c.score >= 7.0).sort((a, b) => b.score - a.score);
-
-        parsedNvd.filter(c => c.score >= 9.0).slice(0, 2).forEach(c => {
+        nvdItems.filter(c => c.score >= 9.0).slice(0, 2).forEach(c => {
           if (newP0Alerts.length < 7 && !newP0Alerts.some(e => e.cve === c.id)) {
-            newP0Alerts.push({
-              vendor: 'NVD Critical',
-              cve: c.id,
-              badge: c.score.toFixed(1),
-              isKev: false,
-              isZeroWire: false,
-              title: c.desc,
-              action: '立即评估受影响资产暴露面并升级至安全版本',
-              summary: c.fullDesc,
-              url: c.url
-            });
+            newP0Alerts.push({ vendor: c.vendor ? c.vendor : 'NVD Critical', cve: c.id, refs: [c.id], badge: c.score.toFixed(1), isKev: false, isZeroWire: false,
+              title: c.title, action: '立即评估受影响资产暴露面并升级至安全版本', summary: c.fullDesc, url: c.url });
           }
         });
 
-        const newP1Items = parsedNvd.slice(0, 8).map(c => ({
-          key: c.id,
-          desc: `${c.desc}（CVSS ${c.score.toFixed(1)}）`,
-          summary: c.fullDesc,
-          url: c.url
+        // ---------- Card 3: P1 + Zero Wire / GHSA ----------
+        const newP1Items = nvdItems.slice(0, 8).map(c => ({ key: c.id, refs: [c.id], desc: `${c.title}（CVSS ${c.score.toFixed(1)}）`, summary: c.fullDesc, url: c.url }));
+        const zwBriefings = zwItems.slice(0, 4).map(z => ({
+          key: z.cves.length ? `${z.title} (${z.cves.slice(0, 2).join(', ')})` : z.title, refs: [z.id, ...z.cves],
+          desc: z.desc ? truncate(z.desc, 95) : 'Cloudflare Radar Zero Wire 实时安全威胁动态', summary: z.desc || z.title, isZeroWire: true, url: z.url
         }));
-
-        // 4) Combine Cloudflare Zero Wire Briefings + OSV/GHSA in Card 3
-        const zwBriefings = zwList.slice(0, 4).map(z => ({
-          key: z.cves.length > 0 ? `${z.title} (${z.cves.slice(0, 2).join(', ')})` : z.title,
-          desc: z.description ? (z.description.length > 95 ? z.description.slice(0, 93) + '...' : z.description) : 'Cloudflare Radar Zero Wire 实时安全威胁动态',
-          summary: z.description || z.title,
-          isZeroWire: true,
-          url: z.link || 'https://radar.cloudflare.com/security/zero-wire'
+        const ghsaSorted = intel.ghsa.filter(g => g.severity === 'critical' || g.severity === 'high').sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'critical' ? -1 : 1));
+        const ghsaBriefings = ghsaSorted.slice(0, 4).map(g => ({
+          key: g.cves[0] || g.id, refs: [g.id, ...g.cves], desc: `${g.title || '开源组件安全公告'}（${(g.severity || '').toUpperCase()}）`,
+          summary: truncate(g.desc, 600), isZeroWire: false, url: g.url
         }));
-
-        const osvBriefings = osvList.slice(0, 4).map(v => ({
-          key: v.cve_id || v.ghsa_id,
-          desc: `${v.summary || '开源组件安全公告'}（${(v.severity || '').toUpperCase()}）`,
-          summary: (v.description || v.summary || 'GitHub Advisory 开源组件漏洞公告').slice(0, 600),
-          isZeroWire: false,
-          url: v.html_url || 'https://github.com/advisories'
-        }));
-
-        const combinedCard3List = [...zwBriefings, ...osvBriefings];
+        const combinedCard3List = [...zwBriefings, ...ghsaBriefings];
         const uniqueVendors = [...new Set(vendorsHighlight)].slice(0, 4).join(' / ');
-        const zwHeadline = zwList[0]?.title ? ` · Zero Wire 关注：${zwList[0].title.slice(0, 32)}` : '';
+        const zwHeadline = zwItems[0]?.title ? ` · Zero Wire 关注：${zwItems[0].title.slice(0, 32)}` : '';
+        const highCount = nvd ? nvd.total : 0;
 
-        const highCount = parsedNvd.length;
         briefingState = {
-          dateFull: todayFull,
-          dateShort: todayShort,
-          subtitle: 'TLP:CLEAR  |  每日威胁情报速递（实时采集）',
-          focus: `CISA KEV 近 7 天新增 ${kevRecent} 枚在野利用${uniqueVendors ? `（最近收录：${uniqueVendors}）` : ''}${zwHeadline} · NVD 近 48 小时已评分高危漏洞 ${highCount} 枚`,
-          metrics: {
-            p0: newP0Alerts.length,
-            high: highCount,
-            kev: kevRecent,
-            oss: combinedCard3List.length
-          },
+          dateFull: todayFull, dateShort: todayShort, subtitle: 'TLP:CLEAR  |  每日威胁情报速递（实时采集）',
+          focus: `CISA KEV 近 7 天新增 ${kev ? kev.recent : 0} 枚在野利用${uniqueVendors ? `（最近收录：${uniqueVendors}）` : ''}${zwHeadline} · NVD 近 48 小时高危及严重漏洞 ${highCount} 枚`,
+          metrics: { p0: newP0Alerts.length, high: highCount, kev: kev ? kev.recent : 0, oss: combinedCard3List.length },
           p0Sub: `${newP0Alerts.length} 组重点紧急告警 · 含 CISA KEV & Zero Wire 在野动态`,
           p0Alerts: newP0Alerts,
-          p1Header: `P1 高分漏洞 ×${newP1Items.length}`,
-          p1Items: newP1Items,
-          ghsaHeader: `Cloudflare Zero Wire & GHSA 公告 ×${combinedCard3List.length}`,
-          ghsaItems: combinedCard3List,
-          obsSub: `其余 NVD 近期高危漏洞（近 48 小时共 ${highCount} 条已评分 ≥7.0）`,
-          observations: parsedNvd.slice(8, 15).map(c => ({
-            vendor: `${c.id} (CVSS ${c.score.toFixed(1)})`,
-            desc: c.desc
-          })),
+          p1Header: `P1 高分漏洞 ×${newP1Items.length}`, p1Items: newP1Items,
+          ghsaHeader: `Cloudflare Zero Wire & GHSA 公告 ×${combinedCard3List.length}`, ghsaItems: combinedCard3List,
+          obsSub: `其余 NVD 近期高危漏洞（近 48 小时共 ${highCount} 条 CVSS≥7.0，此处展示已评分条目）`,
+          observations: nvdItems.slice(8, 15).map(c => ({ vendor: `${c.id} (CVSS ${c.score.toFixed(1)})`, desc: c.title })),
           actions: [
             { tier: '今日内', text: `优先排查 CISA KEV 与 Cloudflare Zero Wire 在野利用组件（${uniqueVendors || '核心网关与虚拟化平台'}），立即应用官方安全补丁。` },
             { tier: '本周内', text: '针对 NVD CVSS ≥ 9.0 漏洞开展资产测绘与版本核查，限制管理后台公网暴露。' },
-            { tier: '持续跟踪', text: '持续跟踪 Cloudflare Radar Zero Wire 全球扫描态势与 GitHub Advisory 依赖更新。' }
+            { tier: '持续跟踪', text: '持续跟踪 Cloudflare Radar Zero Wire、厂商 PSIRT 公告与 GitHub Advisory 依赖更新。' }
           ]
         };
-
         dataSource = 'live';
-        renderBriefing();
-        showCards();
-        document.getElementById('lastUpdatedLabel').textContent = `实时数据 · 更新于 ${todayShort} ${now.toTimeString().slice(0, 5)}`;
+        computeEnv();
+        renderBriefing(); renderEnvPanel(); renderFeedPanel();
+        showCards(true);
+        $('lastUpdatedLabel').textContent = `实时数据 · 更新于 ${todayShort} ${now.toTimeString().slice(0, 5)}`;
         if (!isAuto) showToast('已拉取最新情报！');
+
+        // EPSS enrichment (non-blocking): P0 / P1 / environment hits
+        const ids = [...newP0Alerts.flatMap(a => a.refs), ...newP1Items.flatMap(a => a.refs), ...envRows.flatMap(r => r.cves)];
+        enrichEpss(ids).then(() => { computeEnv(); renderBriefing(); renderEnvPanel(); });
       } else if (dataSource === 'none') {
         showLoadingPanel('error');
-        document.getElementById('lastUpdatedLabel').textContent = '实时数据获取失败';
+        $('lastUpdatedLabel').textContent = '实时数据获取失败';
       } else {
         showToast('外部接口暂时无法访问，已保留当前简报数据。');
       }
-
-      btn.disabled = false;
-      spinner.classList.add('hidden');
-      icon.classList.remove('hidden');
+      isFetching = false;
+      btn.disabled = false; spinner.classList.add('hidden'); icon.classList.remove('hidden');
       btnText.textContent = '拉取最新真实情报';
     }
 
+    // ---- Deep scan: query NVD per asset (keyword search), then merge into the match pool ----
+    let scanning = false;
+    async function deepScanNvd() {
+      if (scanning || !assets.length) return;
+      scanning = true;
+      const b = $('btnDeepScan');
+      const days = Math.min(settings.windowDays > 0 ? settings.windowDays : 120, 120);
+      const end = new Date(), start = new Date(end.getTime() - days * 864e5);
+      const delay = settings.nvdKey ? 800 : 6500; // NVD public limit: 5 requests / 30 s without API key
+      const list = assets.slice(0, 25);
+      let failed = 0;
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i];
+        if (b) b.textContent = `扫描中 ${i + 1}/${list.length}…`;
+        const kw = [(a.product.length < 5 ? a.vendor : ''), a.product].filter(Boolean).join(' ');
+        try {
+          const j = await nvdRequest(`keywordSearch=${encodeURIComponent(kw)}&pubStartDate=${nvdDate(start)}&pubEndDate=${nvdDate(end)}&resultsPerPage=100`);
+          (j.vulnerabilities || []).forEach(v => { const it = nvdToItem(v.cve); deepPool.set(it.id, it); });
+        } catch (e) { failed++; }
+        if (i < list.length - 1) await sleep(delay);
+      }
+      scanning = false;
+      computeEnv(); renderBriefing(); renderEnvPanel();
+      showToast(failed ? `深度扫描完成（${failed} 项资产查询失败/限流）` : '深度扫描完成');
+      enrichEpss(envRows.flatMap(r => r.cves)).then(() => { computeEnv(); renderEnvPanel(); });
+    }
+
     // =========================================================================
-    // 4. INTERACTIVE CONTROLS (ZERO WIRE FILTER, INSPECTOR MODAL, EDITOR, EXPORT)
+    // 9. ASSET INVENTORY (manual entry · CSV/JSON/text import · export)
+    // =========================================================================
+    const ASSET_KEYS = {
+      vendor: ['vendor', '厂商', '供应商', '品牌', 'manufacturer', 'publisher'],
+      product: ['product', '产品', '名称', '软件', 'name', 'software', 'component', 'package'],
+      version: ['version', '版本', 'ver'],
+      keywords: ['keywords', 'keyword', 'alias', 'aliases', '别名', '关键词'],
+      note: ['note', 'notes', '备注', 'owner', '负责人', 'env', '环境', 'asset', '资产']
+    };
+    function newId() { return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function normAsset(o) {
+      const s = (v) => String(v == null ? '' : v).trim().slice(0, 200);
+      const a = { id: newId(), vendor: s(o.vendor), product: s(o.product), version: s(o.version), keywords: s(o.keywords), note: s(o.note) };
+      return a.product ? a : null;
+    }
+    function parseCsvRows(text) {
+      const first = text.split(/\r?\n/, 1)[0] || '';
+      const delim = first.includes('\t') ? '\t' : (first.includes('|') && !first.includes(',')) ? '|' : ',';
+      const rows = []; let row = [], cur = '', q = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+        else if (c === '"') q = true;
+        else if (c === delim) { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+        else cur += c;
+      }
+      if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+      return rows.filter(r => r.some(x => String(x).trim()));
+    }
+    function parseAssetsText(text) {
+      text = String(text || '').replace(/^\uFEFF/, '').trim();
+      if (!text) return [];
+      if (text[0] === '[' || text[0] === '{') {
+        try { let j = JSON.parse(text); if (!Array.isArray(j)) j = j.assets || []; return j.map(normAsset).filter(Boolean); } catch (e) { /* fall through to CSV */ }
+      }
+      const rows = parseCsvRows(text);
+      if (!rows.length) return [];
+      const head = rows[0].map(h => h.trim().toLowerCase());
+      const map = {};
+      head.forEach((h, i) => { for (const k in ASSET_KEYS) if (ASSET_KEYS[k].includes(h) && !(k in map)) map[k] = i; });
+      let body = rows, idx = map;
+      if ('product' in map) { body = rows.slice(1); }
+      else { idx = { vendor: 0, product: 1, version: 2, keywords: 3, note: 4 }; if (rows[0].length === 1) idx = { product: 0 }; }
+      return body.map(r => normAsset({ vendor: r[idx.vendor], product: r[idx.product], version: r[idx.version], keywords: r[idx.keywords], note: r[idx.note] })).filter(Boolean);
+    }
+    function addAssets(list) {
+      let added = 0;
+      list.forEach(a => {
+        const dup = assets.some(x => (x.vendor + '|' + x.product + '|' + x.version).toLowerCase() === (a.vendor + '|' + a.product + '|' + a.version).toLowerCase());
+        if (!dup) { assets.push(a); added++; }
+      });
+      saveAssets(); afterAssetsChanged();
+      return added;
+    }
+    function afterAssetsChanged() {
+      renderAssetTable();
+      if (dataSource === 'live') { computeEnv(); renderBriefing(); renderEnvPanel(); renderFeedPanel(); enrichEpss(envRows.flatMap(r => r.cves)).then(() => { computeEnv(); renderEnvPanel(); }); }
+    }
+    function updateAssetBadge() { const b = $('assetCountBadge'); if (b) b.textContent = assets.length; }
+    function addAssetFromForm() {
+      const a = normAsset({ vendor: $('aVendor').value, product: $('aProduct').value, version: $('aVersion').value, keywords: $('aKeywords').value, note: $('aNote').value });
+      if (!a) { showToast('请至少填写「产品」'); return; }
+      const n = addAssets([a]);
+      ['aVendor', 'aProduct', 'aVersion', 'aKeywords', 'aNote'].forEach(id => $(id).value = '');
+      showToast(n ? `已添加：${a.product}` : '该资产已存在');
+    }
+    function deleteAsset(id) { assets = assets.filter(a => a.id !== id); saveAssets(); afterAssetsChanged(); }
+    function clearAssets() { if (!assets.length) return; if (confirm('确定清空全部资产清单？')) { assets = []; saveAssets(); afterAssetsChanged(); } }
+    function importAssetsFromText() {
+      const list = parseAssetsText($('aImportText').value);
+      if (!list.length) { showToast('没有识别到有效资产，请检查格式'); return; }
+      const n = addAssets(list);
+      $('aImportText').value = '';
+      showToast(`已导入 ${n} 项资产${n < list.length ? `（${list.length - n} 项重复已跳过）` : ''}`);
+    }
+    function importAssetsFromFile(input) {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => { $('aImportText').value = String(rd.result || ''); importAssetsFromText(); input.value = ''; };
+      rd.readAsText(f, 'utf-8');
+    }
+    function downloadBlob(name, content, type) {
+      const url = URL.createObjectURL(new Blob([content], { type }));
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+    }
+    function csvCell(v) { v = String(v || ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+    function exportAssets(fmt) {
+      if (fmt === 'json') downloadBlob('my-assets.json', JSON.stringify(assets.map(({ id, ...r }) => r), null, 2), 'application/json');
+      else downloadBlob('my-assets.csv', '\uFEFFvendor,product,version,keywords,note\n' + assets.map(a => [a.vendor, a.product, a.version, a.keywords, a.note].map(csvCell).join(',')).join('\n'), 'text/csv');
+    }
+    function downloadTemplate() {
+      downloadBlob('assets-template.csv', '\uFEFFvendor,product,version,keywords,note\nPalo Alto Networks,PAN-OS,11.1.4,GlobalProtect;Panorama,边界防火墙\nF5,NGINX,1.24.0,,Web 层\nMicrosoft,Exchange Server,2019,,邮件\n', 'text/csv');
+    }
+    function renderAssetTable() {
+      updateAssetBadge();
+      const el = $('assetTable'); if (!el) return;
+      $('assetCountLabel').textContent = `共 ${assets.length} 项`;
+      el.innerHTML = assets.length ? assets.map(a => `
+        <tr class="border-t border-slate-100">
+          <td class="py-1.5 pr-2">${escapeHtml(a.vendor)}</td><td class="py-1.5 pr-2 font-semibold">${escapeHtml(a.product)}</td>
+          <td class="py-1.5 pr-2">${escapeHtml(a.version)}</td><td class="py-1.5 pr-2 text-slate-500">${escapeHtml(a.keywords)}</td>
+          <td class="py-1.5 pr-2 text-slate-500">${escapeHtml(a.note)}</td>
+          <td class="py-1.5 text-right"><button onclick="deleteAsset('${a.id}')" class="text-rose-500 hover:text-rose-700 text-xs">删除</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="py-4 text-center text-slate-400 text-xs">暂无资产。可手动添加，或粘贴/导入 CSV。</td></tr>';
+    }
+
+    // ---- Settings tab (sources · NVD key · EPSS) ----
+    function renderSettingsTab() {
+      $('feedToggles').innerHTML = allFeeds().map(f => `
+        <label class="flex items-center gap-2 py-1 text-xs"><input type="checkbox" ${f.on ? 'checked' : ''} ${f.custom ? 'disabled' : ''} onchange="settings.feedsOn['${f.id}']=this.checked" />
+          <span class="font-semibold text-slate-700">${escapeHtml(f.name)}</span><span class="text-slate-400 truncate">${escapeHtml(f.url)}</span>
+          ${f.custom ? `<button type="button" onclick="removeCustomFeed(${parseInt(f.id.slice(1), 10)})" class="ml-auto text-rose-500 text-xs">移除</button>` : ''}</label>`).join('');
+      $('setNvdKey').value = settings.nvdKey || '';
+      $('setEpss').checked = !!settings.epss;
+    }
+    function addCustomFeed() {
+      const name = $('cfName').value.trim(), url = $('cfUrl').value.trim();
+      if (!name || safeUrl(url) === '#') { showToast('请填写名称和有效的 http(s) RSS/Atom 地址'); return; }
+      settings.customFeeds.push({ name: name.slice(0, 40), url: safeUrl(url) });
+      $('cfName').value = ''; $('cfUrl').value = ''; renderSettingsTab();
+    }
+    function removeCustomFeed(i) { settings.customFeeds.splice(i, 1); renderSettingsTab(); }
+    function saveSettingsAndRefetch() {
+      settings.nvdKey = $('setNvdKey').value.trim();
+      settings.epss = $('setEpss').checked;
+      saveSettings(); closeAssetModal(); renderChips(); fetchAllLiveIntel(false);
+    }
+    function switchAssetTab(t) {
+      $('tabAssets').classList.toggle('hidden', t !== 'assets');
+      $('tabSettings').classList.toggle('hidden', t !== 'settings');
+      $('tabBtnAssets').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold ' + (t === 'assets' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white');
+      $('tabBtnSettings').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold ' + (t === 'settings' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white');
+      if (t === 'settings') renderSettingsTab(); else renderAssetTable();
+    }
+    function openAssetModal(tab) { $('assetModal').classList.remove('hidden'); switchAssetTab(tab || 'assets'); }
+    function closeAssetModal() { $('assetModal').classList.add('hidden'); }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAssetModal(); closeDetailModal(); closeEditorModal(); } });
+
+    // =========================================================================
+    // 10. INTERACTIVE CONTROLS (ZERO WIRE FILTER, INSPECTOR MODAL, EDITOR, EXPORT)
     // =========================================================================
     function toggleZeroWireFilter() {
       onlyZeroWire = !onlyZeroWire;
@@ -1348,9 +1927,15 @@
       document.getElementById('detailMetaDate').textContent = `简报日期: ${briefingState.dateShort}`;
       document.getElementById('detailSummary').textContent = summary;
       document.getElementById('detailAction').textContent = action;
+      const envHere = envTagFor(item && item.refs);
+      const envWrap = document.getElementById('detailEnvWrap');
+      if (envHere.length) {
+        envWrap.classList.remove('hidden');
+        document.getElementById('detailEnv').textContent = envHere.map(r => `${[r.asset.vendor, r.asset.product, r.asset.version].filter(Boolean).join(' ')} — ${LEVEL_META[r.level].label}：${r.evidence[0] || ''}`).join('\n');
+      } else { envWrap.classList.add('hidden'); }
 
       const linkEl = document.getElementById('detailRefLink');
-      linkEl.href = url;
+      linkEl.href = safeUrl(url, '#');
       document.getElementById('detailRefLabel').textContent = refText;
 
       document.getElementById('detailModal').classList.remove('hidden');
@@ -1364,6 +1949,7 @@
       briefingState = JSON.parse(JSON.stringify(referenceBriefingData));
       dataSource = 'sample';
       showCards();
+      renderEnvPanel(); renderFeedPanel();
       onlyZeroWire = false;
       document.getElementById('btnFilterZw').className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition';
       document.getElementById('btnFilterZwText').textContent = 'Zero Wire 专题: 全部展示';
@@ -1502,13 +2088,19 @@
     }
 
     function copyBriefingText() {
+      const hits = envRows.filter(r => r.level !== 'mention');
       const lines = [
         `🛡️ 网络安全威胁简报 (${briefingState.dateFull})`,
         `${briefingState.subtitle}`,
         ``,
         `📌 今日聚焦：${briefingState.focus}`,
-        `📊 核心指标：P0 紧急告警 ${briefingState.metrics.p0} | 高危漏洞(48h) ${briefingState.metrics.high} | 新增在野利用 ${briefingState.metrics.kev} | 开源生态/Zero Wire ${briefingState.metrics.oss}`,
+        `📊 核心指标：P0 紧急告警 ${briefingState.metrics.p0} | 高危漏洞(48h) ${briefingState.metrics.high} | 新增在野利用(7天) ${briefingState.metrics.kev} | 开源生态/Zero Wire ${briefingState.metrics.oss}`,
         ``,
+        ...(assets.length && dataSource === 'live' ? [
+          `🏢 我的环境影响（${assets.length} 项资产）：${hits.length ? '' : '近期情报未发现明确影响'}`,
+          ...hits.slice(0, 15).map(r => `- [${LEVEL_META[r.level].label}] ${r.asset.product}${r.asset.version ? ' ' + r.asset.version : ''}：${r.cves.join('/') || ''} ${truncate(r.title, 80)}`),
+          ``
+        ] : []),
         `🚨 一、P0 紧急告警`,
         ...briefingState.p0Alerts.map(a => `- [${a.vendor}] ${a.cve} (${a.badge}): ${a.title} -> 行动: ${a.action}`),
         ``,
@@ -1518,23 +2110,24 @@
         `⚡ Cloudflare Zero Wire & GHSA 公告`,
         ...briefingState.ghsaItems.map(g => `- ${g.isZeroWire ? '[Zero Wire] ' : ''}${g.key} ${g.desc}`),
         ``,
+        `🔭 三、漏洞观察`,
+        ...briefingState.observations.map(o => `- ${o.vendor}：${o.desc}`),
+        ``,
         `✅ 四、处置建议`,
         ...briefingState.actions.map(act => `- ${act.tier} → ${act.text}`),
         ``,
-        `🔗 情报源：NVD · CISA KEV · Cloudflare Radar Zero Wire · GitHub Advisory`
+        `🔗 情报源：NVD · CISA KEV · Cloudflare Radar Zero Wire · GitHub Advisory · EPSS · 厂商 PSIRT/新闻 RSS`
       ];
-
-      const textArea = document.createElement('textarea');
-      textArea.value = lines.join('\n');
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        showToast('已复制完整 Markdown/文本简报到剪贴板');
-      } catch (err) {
-        showToast('复制失败，请手动选择复制');
-      }
-      document.body.removeChild(textArea);
+      const text = lines.join('\n');
+      const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showToast('已复制完整文本简报到剪贴板'); } catch (err) { showToast('复制失败，请手动选择复制'); }
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast('已复制完整文本简报到剪贴板'), fallback);
+      } else { fallback(); }
     }
 
     function showToast(msg) {
@@ -1563,6 +2156,8 @@
 
     // Initialize UI on load
     window.addEventListener('DOMContentLoaded', () => {
+      renderChips();
+      renderAssetTable();
       renderBriefing();           // renders empty placeholders (hidden)
       fetchAllLiveIntel(true);    // auto-pull live data on first load
     });
