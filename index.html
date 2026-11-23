@@ -97,7 +97,7 @@
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center gap-2">
         <!-- Fetch Live Intel Button -->
-        <button id="btnFetchLive" onclick="fetchAllLiveIntel()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md transition active:scale-95">
+        <button id="btnFetchLive" onclick="fetchAllLiveIntel(false)" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md transition active:scale-95">
           <svg id="fetchSpinner" class="w-4 h-4 hidden animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -110,7 +110,7 @@
 
         <!-- Reset Reference Sample -->
         <button onclick="loadReferenceSample()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium transition">
-          恢复默认示例
+          查看示例数据
         </button>
 
         <!-- Edit Modal Trigger -->
@@ -148,23 +148,23 @@
         <div class="flex flex-wrap items-center gap-3 sm:gap-4">
           <span class="font-medium text-slate-300">情报源状态:</span>
           <span id="statusKev" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> CISA KEV: <span class="text-slate-300">就绪</span>
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span> CISA KEV: <span class="text-slate-300">等待中</span>
           </span>
           <span id="statusNvd" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> NVD API: <span class="text-slate-300">就绪</span>
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span> NVD API: <span class="text-slate-300">等待中</span>
           </span>
           <span id="statusZw" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-orange-400"></span> Cloudflare Zero Wire: <span class="text-slate-300">就绪</span>
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span> Cloudflare Zero Wire: <span class="text-slate-300">等待中</span>
           </span>
           <span id="statusOsv" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> OSV / GHSA: <span class="text-slate-300">就绪</span>
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span> OSV / GHSA: <span class="text-slate-300">等待中</span>
           </span>
           <button id="btnFilterZw" onclick="toggleZeroWireFilter()" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition">
             <span>⚡</span>
             <span id="btnFilterZwText">Zero Wire 专题: 全部展示</span>
           </button>
         </div>
-        <div id="lastUpdatedLabel" class="text-slate-400">当前展示: 2026-11-21 基准简报数据（含 Zero Wire）</div>
+        <div id="lastUpdatedLabel" class="text-slate-400">首次加载：正在自动拉取实时数据…</div>
       </div>
     </div>
   </header>
@@ -179,7 +179,23 @@
 
   <!-- Main Briefing Cards Workspace -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:py-8">
-    <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start">
+    <!-- First-load status panel (shown while live data is being fetched, or if every source fails) -->
+    <div id="loadingPanel" class="no-print max-w-xl mx-auto my-16 bg-white rounded-3xl border border-slate-200 shadow-xl p-8 text-center">
+      <div id="loadingSpinnerBox" class="mx-auto mb-4 w-12 h-12">
+        <svg class="w-12 h-12 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+      <h2 id="loadingTitle" class="text-lg font-bold text-slate-800 mb-1">正在拉取最新威胁情报…</h2>
+      <p id="loadingDesc" class="text-sm text-slate-500">正在从 CISA KEV、NVD、Cloudflare Zero Wire、GitHub Advisory 获取数据，请稍候。</p>
+      <div id="loadingActions" class="mt-5 hidden flex-wrap justify-center gap-2">
+        <button onclick="fetchAllLiveIntel()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold">重新拉取</button>
+        <button onclick="loadReferenceSample()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50">查看示例数据</button>
+      </div>
+    </div>
+
+    <div id="cardsContainer" style="display:none" class="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start">
 
       <!-- ==================== CARD 1: COVER BRIEFING ==================== -->
       <section id="card-1" class="slide-card blueprint-cover rounded-3xl p-7 sm:p-9 text-white flex flex-col justify-between min-h-[680px] shadow-2xl relative overflow-hidden border border-slate-700/60">
@@ -205,7 +221,7 @@
 
           <!-- Date Pill -->
           <div class="inline-flex items-center px-5 py-2 rounded-full border border-sky-400/45 bg-sky-950/55 text-sky-100 text-base sm:text-lg font-medium tracking-wide mb-3.5 shadow-inner">
-            <span id="coverDate">2026-11-21 · 星期六</span>
+            <span id="coverDate">—</span>
           </div>
 
           <!-- TLP Subtitle -->
@@ -225,7 +241,7 @@
               </a>
             </div>
             <p id="coverFocusText" class="text-slate-100 text-sm sm:text-[15px] leading-relaxed font-normal">
-              KEV 新增 4 枚在野利用（vCenter / Cisco / Apache Roller / SAP）· Cloudflare Zero Wire 预警 MONAI Label 在野 RCE 与边缘网关利用 · WordPress 插件批 5 枚未认证接管
+              正在从情报源加载最新数据…
             </p>
           </div>
         </div>
@@ -235,19 +251,19 @@
           <!-- 4 Metric Boxes -->
           <div class="grid grid-cols-4 gap-2.5 sm:gap-3.5 mb-7">
             <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
-              <div id="metricP0" class="text-2xl sm:text-3xl font-extrabold text-[#f05d4e] leading-none mb-2">18</div>
+              <div id="metricP0" class="text-2xl sm:text-3xl font-extrabold text-[#f05d4e] leading-none mb-2">–</div>
               <div id="metricP0Label" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">P0 紧急告警</div>
             </div>
             <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
-              <div id="metricHigh" class="text-2xl sm:text-3xl font-extrabold text-[#f2aa36] leading-none mb-2">94</div>
-              <div id="metricHighLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">高危漏洞<br />(24h)</div>
+              <div id="metricHigh" class="text-2xl sm:text-3xl font-extrabold text-[#f2aa36] leading-none mb-2">–</div>
+              <div id="metricHighLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">高危漏洞<br />(48h)</div>
             </div>
             <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
-              <div id="metricKev" class="text-2xl sm:text-3xl font-extrabold text-[#f05d4e] leading-none mb-2">4</div>
-              <div id="metricKevLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">新增在野利用</div>
+              <div id="metricKev" class="text-2xl sm:text-3xl font-extrabold text-[#f05d4e] leading-none mb-2">–</div>
+              <div id="metricKevLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">新增在野利用<br />(7天)</div>
             </div>
             <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
-              <div id="metricOss" class="text-2xl sm:text-3xl font-extrabold text-[#5aa9fa] leading-none mb-2">38</div>
+              <div id="metricOss" class="text-2xl sm:text-3xl font-extrabold text-[#5aa9fa] leading-none mb-2">–</div>
               <div id="metricOssLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">开源生态 /<br />Zero Wire</div>
             </div>
           </div>
@@ -276,9 +292,7 @@
             <span id="card2SectionPill" class="px-3.5 py-1 rounded-lg bg-[#d9382e] text-white font-bold text-xs sm:text-sm shadow-sm">
               一、P0 紧急告警
             </span>
-            <span id="card2SectionSub" class="text-xs sm:text-sm text-slate-500 font-medium">
-              18 组需立即行动 · 含 KEV 在野利用 4 枚
-            </span>
+            <span id="card2SectionSub" class="text-xs sm:text-sm text-slate-500 font-medium">加载中…</span>
           </div>
 
           <!-- P0 Alert Items Container -->
@@ -364,9 +378,7 @@
             <span id="card4ObsPill" class="px-3.5 py-1 rounded-lg bg-[#64748b] text-white font-bold text-xs sm:text-sm shadow-sm">
               三、漏洞观察
             </span>
-            <span id="card4ObsSub" class="text-xs sm:text-sm text-slate-500 font-medium">
-              其余达标漏洞 70+ 枚，按厂商归组
-            </span>
+            <span id="card4ObsSub" class="text-xs sm:text-sm text-slate-500 font-medium">加载中…</span>
           </div>
 
           <!-- Observations List -->
@@ -480,7 +492,7 @@
             <input id="editMetricP0" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold" />
           </div>
           <div>
-            <label class="block font-semibold text-amber-600 mb-1">高危漏洞 (24h)</label>
+            <label class="block font-semibold text-amber-600 mb-1">高危漏洞 (48h)</label>
             <input id="editMetricHigh" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold" />
           </div>
           <div>
@@ -712,7 +724,48 @@
     };
 
     // Deep clone active state
-    let briefingState = JSON.parse(JSON.stringify(referenceBriefingData));
+    const emptyBriefingState = {
+      dateFull: '—', dateShort: '—', subtitle: 'TLP:CLEAR  |  每日威胁情报速递',
+      focus: '', metrics: { p0: 0, high: 0, kev: 0, oss: 0 }, p0Sub: '',
+      p0Alerts: [], p1Header: 'P1 高分漏洞', p1Items: [], ghsaHeader: 'Cloudflare Zero Wire & GHSA 公告',
+      ghsaItems: [], obsSub: '', observations: [], actions: []
+    };
+    // First load starts EMPTY (no built-in sample). Sample is only shown if the user clicks "查看示例数据".
+    let briefingState = JSON.parse(JSON.stringify(emptyBriefingState));
+    let dataSource = 'none'; // 'none' | 'live' | 'sample'
+
+    // Abort any request that hangs > 15s so the first load never spins forever
+    (function () {
+      const _fetch = window.fetch.bind(window);
+      window.fetch = (url, opts = {}) => {
+        if (!opts.signal && typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+          opts = { ...opts, signal: AbortSignal.timeout(15000) };
+        }
+        return _fetch(url, opts);
+      };
+    })();
+
+    function showCards() {
+      document.getElementById('loadingPanel').style.display = 'none';
+      document.getElementById('cardsContainer').style.display = '';
+    }
+    function showLoadingPanel(mode) {
+      const panel = document.getElementById('loadingPanel');
+      panel.style.display = '';
+      document.getElementById('cardsContainer').style.display = 'none';
+      const failed = mode === 'error';
+      document.getElementById('loadingSpinnerBox').style.display = failed ? 'none' : '';
+      document.getElementById('loadingTitle').textContent = failed ? '暂时无法获取实时情报' : '正在拉取最新威胁情报…';
+      document.getElementById('loadingDesc').textContent = failed
+        ? '所有情报源均未返回数据（可能是网络、跨域或接口限流）。请稍后点击「重新拉取」。'
+        : '正在从 CISA KEV、NVD、Cloudflare Zero Wire、GitHub Advisory 获取数据，请稍候。';
+      const act = document.getElementById('loadingActions');
+      act.classList.toggle('hidden', !failed);
+      act.classList.toggle('flex', failed);
+    }
+    function emptyNote(text) {
+      return `<div class="bg-white rounded-xl px-3.5 py-3 text-xs text-slate-400 border border-dashed border-slate-300 text-center">${text}</div>`;
+    }
 
     // =========================================================================
     // 2. RENDERING ENGINE FOR THE 4 BRIEFING CARDS
@@ -734,8 +787,8 @@
 
       if (currentLang === 'zh') {
         document.getElementById('metricP0Label').innerHTML = 'P0 紧急告警';
-        document.getElementById('metricHighLabel').innerHTML = '高危漏洞<br />(24h)';
-        document.getElementById('metricKevLabel').innerHTML = '新增在野利用';
+        document.getElementById('metricHighLabel').innerHTML = '高危漏洞<br />(48h)';
+        document.getElementById('metricKevLabel').innerHTML = '新增在野利用<br />(7天)';
         document.getElementById('metricOssLabel').innerHTML = '开源生态 /<br />Zero Wire';
         document.getElementById('card2BannerTitle').textContent = '威胁简报 · P0 紧急告警';
         document.getElementById('card2SectionPill').textContent = '一、P0 紧急告警';
@@ -746,8 +799,8 @@
         document.getElementById('card4ActPill').textContent = '四、处置建议';
       } else {
         document.getElementById('metricP0Label').innerHTML = 'P0 Alerts';
-        document.getElementById('metricHighLabel').innerHTML = 'High Vulns<br />(24h)';
-        document.getElementById('metricKevLabel').innerHTML = 'Active KEV';
+        document.getElementById('metricHighLabel').innerHTML = 'High Vulns<br />(48h)';
+        document.getElementById('metricKevLabel').innerHTML = 'New KEV<br />(7d)';
         document.getElementById('metricOssLabel').innerHTML = 'OSS /<br />Zero Wire';
         document.getElementById('card2BannerTitle').textContent = 'THREAT BRIEFING · P0 ALERTS';
         document.getElementById('card2SectionPill').textContent = 'I. P0 URGENT ALERTS';
@@ -802,12 +855,12 @@
               </div>
             `;
           }).join('')
-        : `<div class="bg-white rounded-2xl p-5 text-center text-xs text-slate-500 border border-dashed border-slate-300">当前筛选下暂无 P0 Zero Wire 置顶条目，可查看第三张卡片「Cloudflare Zero Wire & GHSA 公告」或点击上方重置筛选。</div>`;
+        : `<div class="bg-white rounded-2xl p-5 text-center text-xs text-slate-500 border border-dashed border-slate-300">${onlyZeroWire ? '当前筛选下暂无 P0 Zero Wire 置顶条目，可查看第三张卡片「Cloudflare Zero Wire & GHSA 公告」或点击上方重置筛选。' : '暂无 P0 紧急告警。'}</div>`;
 
       // Card 3: P1 Highlights & Cloudflare Zero Wire / GHSA
       document.getElementById('p1HeaderBar').textContent = briefingState.p1Header;
       const p1Container = document.getElementById('p1ListContainer');
-      p1Container.innerHTML = briefingState.p1Items.map((item, idx) => `
+      p1Container.innerHTML = briefingState.p1Items.length === 0 ? emptyNote('近 48 小时暂无已评分的高危漏洞（NVD 新条目评分通常有延迟）') : briefingState.p1Items.map((item, idx) => `
         <div onclick="openDetailModal('p1', ${idx})" role="button" tabindex="0" class="cursor-pointer bg-white rounded-xl px-3.5 py-2.5 shadow-2xs border border-slate-200/60 hover:border-sky-300 hover:bg-sky-50/30 transition text-xs sm:text-[13px] leading-snug flex items-start justify-between gap-2">
           <div>
             <span class="font-bold text-[#c8322b]">${escapeHtml(item.key)}</span>
@@ -827,7 +880,7 @@
         ? briefingState.ghsaItems.filter(item => item.isZeroWire)
         : briefingState.ghsaItems;
 
-      ghsaContainer.innerHTML = filteredGhsa.map((item) => {
+      ghsaContainer.innerHTML = filteredGhsa.length === 0 ? emptyNote('暂无公告') : filteredGhsa.map((item) => {
         const origIdx = briefingState.ghsaItems.indexOf(item);
         const isZw = Boolean(item.isZeroWire);
         return `
@@ -845,7 +898,7 @@
       // Card 4: Observations & Action Plan
       document.getElementById('card4ObsSub').textContent = briefingState.obsSub;
       const obsContainer = document.getElementById('obsListContainer');
-      obsContainer.innerHTML = briefingState.observations.map(item => `
+      obsContainer.innerHTML = briefingState.observations.length === 0 ? emptyNote('暂无更多漏洞') : briefingState.observations.map(item => `
         <div class="bg-white rounded-xl px-3.5 py-2.5 shadow-2xs border border-slate-200/60 text-xs sm:text-[13px] leading-snug">
           <span class="font-bold text-slate-900">${escapeHtml(item.vendor)}：</span>
           <span class="text-slate-700">${escapeHtml(item.desc)}</span>
@@ -965,7 +1018,8 @@
       return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
     }
 
-    async function fetchAllLiveIntel() {
+    async function fetchAllLiveIntel(isAuto = false) {
+      if (dataSource === 'none') showLoadingPanel('loading');
       const btn = document.getElementById('btnFetchLive');
       const spinner = document.getElementById('fetchSpinner');
       const icon = document.getElementById('fetchIcon');
@@ -994,6 +1048,7 @@
       let nvdList = [];
       let zwList = [];
       let osvList = [];
+      let kevRecent = 0;
 
       // Run all 4 threat intelligence fetches concurrently
       const [kevResObj, nvdResObj, zwResObj, osvResObj] = await Promise.allSettled([
@@ -1004,7 +1059,9 @@
           const kevJson = await kevRes.json();
           const vulns = kevJson.vulnerabilities || [];
           vulns.sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || ''));
-          return { total: vulns.length, items: vulns.slice(0, 6) };
+          const weekAgo = now.getTime() - 7 * 24 * 3600 * 1000;
+          const recentCount = vulns.filter(v => new Date(v.dateAdded + 'T00:00:00Z').getTime() >= weekAgo).length;
+          return { total: vulns.length, items: vulns.slice(0, 6), recentCount };
         })(),
 
         // 2) NVD CVE 2.0 API (last 48h)
@@ -1012,7 +1069,7 @@
           const pastDate = new Date(now.getTime() - 48 * 60 * 60 * 1000);
           const pubStart = pastDate.toISOString().split('.')[0] + '.000';
           const pubEnd = now.toISOString().split('.')[0] + '.000';
-          const nvdUrl = `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=${encodeURIComponent(pubStart)}&pubEndDate=${encodeURIComponent(pubEnd)}&resultsPerPage=30`;
+          const nvdUrl = `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=${encodeURIComponent(pubStart)}&pubEndDate=${encodeURIComponent(pubEnd)}&resultsPerPage=100`;
           const nvdRes = await fetch(nvdUrl);
           if (!nvdRes.ok) throw new Error('NVD HTTP error');
           const nvdJson = await nvdRes.json();
@@ -1025,52 +1082,44 @@
         // 3) Cloudflare Radar Zero Wire RSS
         fetchCloudflareZeroWire(),
 
-        // 4) OSV.dev / GitHub Advisory
+        // 4) GitHub Advisory Database (latest reviewed critical/high advisories)
         (async () => {
-          const [osvRes, osvPyRes] = await Promise.all([
-            fetch('https://api.osv.dev/v1/query', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ package: { ecosystem: 'npm', name: 'lodash' } })
-            }),
-            fetch('https://api.osv.dev/v1/query', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ package: { ecosystem: 'PyPI', name: 'requests' } })
-            })
-          ]);
-          const d1 = osvRes.ok ? await osvRes.json() : { vulns: [] };
-          const d2 = osvPyRes.ok ? await osvPyRes.json() : { vulns: [] };
-          return [...(d1.vulns || []).slice(-3), ...(d2.vulns || []).slice(-3)];
+          const r = await fetch('https://api.github.com/advisories?type=reviewed&severity=critical&per_page=6&sort=published&direction=desc', {
+            headers: { 'Accept': 'application/vnd.github+json' }
+          });
+          if (!r.ok) throw new Error('GHSA HTTP error');
+          const arr = await r.json();
+          return Array.isArray(arr) ? arr : [];
         })()
       ]);
 
       if (kevResObj.status === 'fulfilled') {
         kevList = kevResObj.value.items;
+        kevRecent = kevResObj.value.recentCount;
         updateFeedStatus('statusKev', 'ok', `已获取 (${kevResObj.value.total} 总库)`);
       } else {
-        updateFeedStatus('statusKev', 'warn', '跨域限制/使用缓存');
+        updateFeedStatus('statusKev', 'err', '获取失败');
       }
 
       if (nvdResObj.status === 'fulfilled') {
         nvdList = nvdResObj.value.items;
         updateFeedStatus('statusNvd', 'ok', `已获取 (${nvdResObj.value.total} 枚)`);
       } else {
-        updateFeedStatus('statusNvd', 'warn', 'API 限流/已合并');
+        updateFeedStatus('statusNvd', 'err', '获取失败 / 限流');
       }
 
       if (zwResObj.status === 'fulfilled' && zwResObj.value.length > 0) {
         zwList = zwResObj.value;
         updateFeedStatus('statusZw', 'ok', `已获取 (${zwList.length} 条简报)`);
       } else {
-        updateFeedStatus('statusZw', 'warn', '代理受限/内置专题');
+        updateFeedStatus('statusZw', 'warn', '暂无数据');
       }
 
       if (osvResObj.status === 'fulfilled') {
         osvList = osvResObj.value;
-        updateFeedStatus('statusOsv', 'ok', `已连接 (${osvList.length} 条示例)`);
+        updateFeedStatus('statusOsv', 'ok', `已获取 (${osvList.length} 条公告)`);
       } else {
-        updateFeedStatus('statusOsv', 'warn', '离线缓存');
+        updateFeedStatus('statusOsv', 'err', '获取失败 / 限流');
       }
 
       // Build unified live briefing if we retrieved real records from any feed
@@ -1116,8 +1165,9 @@
 
         // 3) Extract top CVSS >= 9.0 from NVD to fill P0 & P1
         const parsedNvd = nvdList.map(cve => {
-          const metrics = cve.metrics?.cvssMetricV31?.[0]?.cvssData || cve.metrics?.cvssMetricV30?.[0]?.cvssData || {};
-          const score = metrics.baseScore || 7.5;
+          const m = cve.metrics || {};
+          const metrics = m.cvssMetricV40?.[0]?.cvssData || m.cvssMetricV31?.[0]?.cvssData || m.cvssMetricV30?.[0]?.cvssData || {};
+          const score = (typeof metrics.baseScore === 'number') ? metrics.baseScore : null; // null = not scored yet
           const descObj = (cve.descriptions || []).find(d => d.lang === 'en') || cve.descriptions?.[0];
           const desc = descObj ? descObj.value : 'High severity vulnerability detected in NVD feed.';
           return {
@@ -1127,7 +1177,7 @@
             desc: desc.length > 110 ? desc.slice(0, 108) + '...' : desc,
             url: `https://nvd.nist.gov/vuln/detail/${cve.id}`
           };
-        }).sort((a, b) => b.score - a.score);
+        }).filter(c => c.score !== null && c.score >= 7.0).sort((a, b) => b.score - a.score);
 
         parsedNvd.filter(c => c.score >= 9.0).slice(0, 2).forEach(c => {
           if (newP0Alerts.length < 7 && !newP0Alerts.some(e => e.cve === c.id)) {
@@ -1162,53 +1212,57 @@
         }));
 
         const osvBriefings = osvList.slice(0, 4).map(v => ({
-          key: (v.aliases && v.aliases[0]) || v.id,
-          desc: `${v.summary || v.details?.slice(0, 75) || '开源组件安全公告'}`,
-          summary: v.details || v.summary || 'GitHub Advisory / OSV 开源组件漏洞公告',
+          key: v.cve_id || v.ghsa_id,
+          desc: `${v.summary || '开源组件安全公告'}（${(v.severity || '').toUpperCase()}）`,
+          summary: (v.description || v.summary || 'GitHub Advisory 开源组件漏洞公告').slice(0, 600),
           isZeroWire: false,
-          url: `https://osv.dev/vulnerability/${v.id}`
+          url: v.html_url || 'https://github.com/advisories'
         }));
 
         const combinedCard3List = [...zwBriefings, ...osvBriefings];
         const uniqueVendors = [...new Set(vendorsHighlight)].slice(0, 4).join(' / ');
         const zwHeadline = zwList[0]?.title ? ` · Zero Wire 关注：${zwList[0].title.slice(0, 32)}` : '';
 
+        const highCount = parsedNvd.length;
         briefingState = {
           dateFull: todayFull,
           dateShort: todayShort,
-          subtitle: 'TLP:CLEAR  |  每日威胁情报速递（四源实时采集版）',
-          focus: `CISA KEV 最新收录在野利用（${uniqueVendors || '多款关键基础设施'}）${zwHeadline} · NVD 近期高危漏洞 ${parsedNvd.length} 枚`,
+          subtitle: 'TLP:CLEAR  |  每日威胁情报速递（实时采集）',
+          focus: `CISA KEV 近 7 天新增 ${kevRecent} 枚在野利用${uniqueVendors ? `（最近收录：${uniqueVendors}）` : ''}${zwHeadline} · NVD 近 48 小时已评分高危漏洞 ${highCount} 枚`,
           metrics: {
-            p0: Math.max(newP0Alerts.length, parsedNvd.filter(c => c.score >= 9.0).length + 4),
-            high: Math.max(parsedNvd.length, 24),
-            kev: kevList.length,
-            oss: Math.max(combinedCard3List.length * 4, 16)
+            p0: newP0Alerts.length,
+            high: highCount,
+            kev: kevRecent,
+            oss: combinedCard3List.length
           },
           p0Sub: `${newP0Alerts.length} 组重点紧急告警 · 含 CISA KEV & Zero Wire 在野动态`,
-          p0Alerts: newP0Alerts.length > 0 ? newP0Alerts : briefingState.p0Alerts,
-          p1Header: `P1 高分漏洞 ×${newP1Items.length || 8}`,
-          p1Items: newP1Items.length > 0 ? newP1Items : briefingState.p1Items,
-          ghsaHeader: `Cloudflare Zero Wire & GHSA 公告 ×${combinedCard3List.length || 8}`,
-          ghsaItems: combinedCard3List.length > 0 ? combinedCard3List : briefingState.ghsaItems,
-          obsSub: `其余 NVD 近期漏洞汇总（共检索 ${nvdList.length} 条记录）`,
-          observations: parsedNvd.slice(8, 15).length > 0
-            ? parsedNvd.slice(8, 15).map(c => ({
-                vendor: `${c.id} (CVSS ${c.score.toFixed(1)})`,
-                desc: c.desc
-              }))
-            : briefingState.observations,
+          p0Alerts: newP0Alerts,
+          p1Header: `P1 高分漏洞 ×${newP1Items.length}`,
+          p1Items: newP1Items,
+          ghsaHeader: `Cloudflare Zero Wire & GHSA 公告 ×${combinedCard3List.length}`,
+          ghsaItems: combinedCard3List,
+          obsSub: `其余 NVD 近期高危漏洞（近 48 小时共 ${highCount} 条已评分 ≥7.0）`,
+          observations: parsedNvd.slice(8, 15).map(c => ({
+            vendor: `${c.id} (CVSS ${c.score.toFixed(1)})`,
+            desc: c.desc
+          })),
           actions: [
             { tier: '今日内', text: `优先排查 CISA KEV 与 Cloudflare Zero Wire 在野利用组件（${uniqueVendors || '核心网关与虚拟化平台'}），立即应用官方安全补丁。` },
             { tier: '本周内', text: '针对 NVD CVSS ≥ 9.0 漏洞开展资产测绘与版本核查，限制管理后台公网暴露。' },
-            { tier: '持续跟踪', text: '持续跟踪 Cloudflare Radar Zero Wire 全球扫描态势与 OSV / GitHub Advisory 依赖树更新。' }
+            { tier: '持续跟踪', text: '持续跟踪 Cloudflare Radar Zero Wire 全球扫描态势与 GitHub Advisory 依赖更新。' }
           ]
         };
 
+        dataSource = 'live';
         renderBriefing();
-        document.getElementById('lastUpdatedLabel').textContent = `四源同步成功 · 更新于 ${todayShort} ${now.toTimeString().slice(0, 5)}`;
-        showToast('已从 CISA KEV / NVD / Cloudflare Zero Wire / OSV 拉取最新情报！');
+        showCards();
+        document.getElementById('lastUpdatedLabel').textContent = `实时数据 · 更新于 ${todayShort} ${now.toTimeString().slice(0, 5)}`;
+        if (!isAuto) showToast('已拉取最新情报！');
+      } else if (dataSource === 'none') {
+        showLoadingPanel('error');
+        document.getElementById('lastUpdatedLabel').textContent = '实时数据获取失败';
       } else {
-        showToast('部分外部接口受浏览器网络限制，已保留当前简报数据。');
+        showToast('外部接口暂时无法访问，已保留当前简报数据。');
       }
 
       btn.disabled = false;
@@ -1308,12 +1362,14 @@
 
     function loadReferenceSample() {
       briefingState = JSON.parse(JSON.stringify(referenceBriefingData));
+      dataSource = 'sample';
+      showCards();
       onlyZeroWire = false;
       document.getElementById('btnFilterZw').className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition';
       document.getElementById('btnFilterZwText').textContent = 'Zero Wire 专题: 全部展示';
       renderBriefing();
-      document.getElementById('lastUpdatedLabel').textContent = '当前展示: 2026-11-21 基准简报数据（含 Zero Wire）';
-      showToast('已恢复基准示例简报模板');
+      document.getElementById('lastUpdatedLabel').textContent = '⚠ 当前为示例数据（非实时），点击「拉取最新真实情报」获取最新内容';
+      showToast('已载入示例数据（非实时）');
     }
 
     function setViewMode(mode) {
@@ -1451,7 +1507,7 @@
         `${briefingState.subtitle}`,
         ``,
         `📌 今日聚焦：${briefingState.focus}`,
-        `📊 核心指标：P0 紧急告警 ${briefingState.metrics.p0} | 高危漏洞(24h) ${briefingState.metrics.high} | 新增在野利用 ${briefingState.metrics.kev} | 开源生态/Zero Wire ${briefingState.metrics.oss}`,
+        `📊 核心指标：P0 紧急告警 ${briefingState.metrics.p0} | 高危漏洞(48h) ${briefingState.metrics.high} | 新增在野利用 ${briefingState.metrics.kev} | 开源生态/Zero Wire ${briefingState.metrics.oss}`,
         ``,
         `🚨 一、P0 紧急告警`,
         ...briefingState.p0Alerts.map(a => `- [${a.vendor}] ${a.cve} (${a.badge}): ${a.title} -> 行动: ${a.action}`),
@@ -1507,7 +1563,8 @@
 
     // Initialize UI on load
     window.addEventListener('DOMContentLoaded', () => {
-      renderBriefing();
+      renderBriefing();           // renders empty placeholders (hidden)
+      fetchAllLiveIntel(true);    // auto-pull live data on first load
     });
   </script>
 </body>
