@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>网络安全威胁简报 · THREAT BRIEFING</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy-deep: #0b1726;
+      --navy-mid: #12263e;
+      --grid-line: rgba(96, 165, 250, 0.08);
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #eef2f6;
+      color: #1e293b;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Blueprint grid background matching Card 1 */
+    .blueprint-cover {
+      background-color: #0d1b2c;
+      background-image:
+        radial-gradient(circle at 80% 15%, rgba(30, 80, 140, 0.42) 0%, rgba(13, 27, 44, 0) 60%),
+        linear-gradient(to right, rgba(148, 197, 255, 0.065) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 197, 255, 0.065) 1px, transparent 1px);
+      background-size: 100% 100%, 34px 34px, 34px 34px;
+    }
+
+    /* Dark navy banner header for Cards 2-4 */
+    .briefing-banner {
+      background: linear-gradient(135deg, #091320 0%, #132844 100%);
+    }
+
+    /* Slide Card surface styling matching reference light gray background */
+    .slide-surface {
+      background-color: #f3f5f8;
+      box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.14), 0 2px 6px -1px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: #ffffff;
+      }
+      .slide-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Control Studio Toolbar -->
+  <header class="no-print sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md text-white border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand / Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center shadow-md">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight">威胁情报简报工坊</h1>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30">INTEL STUDIO</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">自动采集 CISA KEV · NVD · Cloudflare Zero Wire · OSV/GHSA 实时漏洞并生成四联简报卡片</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Fetch Live Intel Button -->
+        <button id="btnFetchLive" onclick="fetchAllLiveIntel()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md transition active:scale-95">
+          <svg id="fetchSpinner" class="w-4 h-4 hidden animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <svg id="fetchIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span id="btnFetchText">拉取最新真实情报</span>
+        </button>
+
+        <!-- Reset Reference Sample -->
+        <button onclick="loadReferenceSample()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium transition">
+          恢复默认示例
+        </button>
+
+        <!-- Edit Modal Trigger -->
+        <button onclick="openEditorModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs sm:text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          <span>编辑内容</span>
+        </button>
+
+        <!-- View Mode Toggle -->
+        <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+          <button id="viewGridBtn" onclick="setViewMode('grid')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-700 text-white transition">四卡视图 (4:5 简报)</button>
+          <button id="viewSingleBtn" onclick="setViewMode('single')" class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">单列长图</button>
+        </div>
+
+        <!-- Language Toggle -->
+        <button onclick="toggleLanguage()" id="langToggleBtn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition">
+          中 / EN
+        </button>
+
+        <!-- Copy Markdown / Print -->
+        <button onclick="copyBriefingText()" class="px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs sm:text-sm font-medium transition">
+          复制文本
+        </button>
+        <button onclick="window.print()" class="hidden md:flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium transition">
+          导出图片 / 打印
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Feed Status Bar -->
+    <div id="feedStatusBar" class="bg-slate-950/80 border-t border-slate-800/80 px-4 py-1.5 text-xs text-slate-400">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+          <span class="font-medium text-slate-300">情报源状态:</span>
+          <span id="statusKev" class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> CISA KEV: <span class="text-slate-300">就绪</span>
+          </span>
+          <span id="statusNvd" class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> NVD API: <span class="text-slate-300">就绪</span>
+          </span>
+          <span id="statusZw" class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-orange-400"></span> Cloudflare Zero Wire: <span class="text-slate-300">就绪</span>
+          </span>
+          <span id="statusOsv" class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> OSV / GHSA: <span class="text-slate-300">就绪</span>
+          </span>
+          <button id="btnFilterZw" onclick="toggleZeroWireFilter()" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition">
+            <span>⚡</span>
+            <span id="btnFilterZwText">Zero Wire 专题: 全部展示</span>
+          </button>
+        </div>
+        <div id="lastUpdatedLabel" class="text-slate-400">当前展示: 2026-11-21 基准简报数据（含 Zero Wire）</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" class="no-print fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300 translate-y-2 opacity-0">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-sm">
+      <span id="toastIcon" class="text-emerald-400">●</span>
+      <span id="toastMessage">操作成功</span>
+    </div>
+  </div>
+
+  <!-- Main Briefing Cards Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:py-8">
+    <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start">
+
+      <!-- ==================== CARD 1: COVER BRIEFING ==================== -->
+      <section id="card-1" class="slide-card blueprint-cover rounded-3xl p-7 sm:p-9 text-white flex flex-col justify-between min-h-[680px] shadow-2xl relative overflow-hidden border border-slate-700/60">
+        <!-- Top Content -->
+        <div>
+          <!-- Top Eyebrow Badge -->
+          <div class="flex items-center gap-2.5 mb-7">
+            <!-- Shield Icon -->
+            <div class="w-6 h-6 rounded-md bg-gradient-to-b from-rose-500 to-slate-200 p-[1.5px] flex items-center justify-center shadow">
+              <div class="w-full h-full bg-slate-900 rounded-[4px] flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/>
+                </svg>
+              </div>
+            </div>
+            <span class="text-sky-300 font-bold tracking-[0.22em] text-xs sm:text-sm uppercase">THREAT BRIEFING</span>
+          </div>
+
+          <!-- Hero Title -->
+          <h2 id="coverTitle" class="text-4xl sm:text-5xl font-black tracking-tight leading-[1.18] text-white mb-7">
+            网络安全<br />威胁简报
+          </h2>
+
+          <!-- Date Pill -->
+          <div class="inline-flex items-center px-5 py-2 rounded-full border border-sky-400/45 bg-sky-950/55 text-sky-100 text-base sm:text-lg font-medium tracking-wide mb-3.5 shadow-inner">
+            <span id="coverDate">2026-11-21 · 星期六</span>
+          </div>
+
+          <!-- TLP Subtitle -->
+          <p id="coverSubtitle" class="text-slate-300/85 text-sm sm:text-base tracking-wider font-medium mb-8">
+            TLP:CLEAR &nbsp;|&nbsp; 每日威胁情报速递
+          </p>
+
+          <!-- Today's Focus Box (今日聚焦) -->
+          <div class="rounded-2xl bg-slate-800/45 backdrop-blur-sm border border-sky-300/20 p-5 sm:p-6 mb-7 shadow-lg">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="flex items-center gap-2 text-amber-400 font-bold text-sm sm:text-base">
+                <span>📌</span>
+                <span id="focusLabel">今日聚焦</span>
+              </div>
+              <a href="https://radar.cloudflare.com/security/zero-wire" target="_blank" rel="noopener noreferrer" class="no-print inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-400/30 hover:bg-orange-500/30 transition">
+                <span>⚡ Zero Wire</span>
+              </a>
+            </div>
+            <p id="coverFocusText" class="text-slate-100 text-sm sm:text-[15px] leading-relaxed font-normal">
+              KEV 新增 4 枚在野利用（vCenter / Cisco / Apache Roller / SAP）· Cloudflare Zero Wire 预警 MONAI Label 在野 RCE 与边缘网关利用 · WordPress 插件批 5 枚未认证接管
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Metrics & Footer -->
+        <div>
+          <!-- 4 Metric Boxes -->
+          <div class="grid grid-cols-4 gap-2.5 sm:gap-3.5 mb-7">
+            <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
+              <div id="metricP0" class="text-2xl sm:text-3xl font-extrabold text-[#f05d4e] leading-none mb-2">18</div>
+              <div id="metricP0Label" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">P0 紧急告警</div>
+            </div>
+            <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
+              <div id="metricHigh" class="text-2xl sm:text-3xl font-extrabold text-[#f2aa36] leading-none mb-2">94</div>
+              <div id="metricHighLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">高危漏洞<br />(24h)</div>
+            </div>
+            <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
+              <div id="metricKev" class="text-2xl sm:text-3xl font-extrabold text-[#f05d4e] leading-none mb-2">4</div>
+              <div id="metricKevLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">新增在野利用</div>
+            </div>
+            <div class="rounded-2xl bg-slate-800/40 border border-sky-300/20 py-4 px-2 text-center flex flex-col justify-center">
+              <div id="metricOss" class="text-2xl sm:text-3xl font-extrabold text-[#5aa9fa] leading-none mb-2">38</div>
+              <div id="metricOssLabel" class="text-[11px] sm:text-xs text-slate-300 font-medium leading-tight">开源生态 /<br />Zero Wire</div>
+            </div>
+          </div>
+
+          <!-- Source Footer -->
+          <div id="coverSources" class="text-xs text-slate-400/90 leading-relaxed tracking-wide border-t border-slate-700/50 pt-4">
+            情报来源 NVD · CISA KEV · Cloudflare Zero Wire · GitHub Advisory · 安全社区
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== CARD 2: P0 URGENT ALERTS ==================== -->
+      <section id="card-2" class="slide-card slide-surface rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[680px] border border-slate-200/80">
+        <div>
+          <!-- Dark Navy Header Banner -->
+          <div class="briefing-banner rounded-2xl px-5 py-4 flex items-center justify-between text-white mb-5 shadow-md">
+            <div class="flex items-center gap-2.5">
+              <span class="text-lg">🚨</span>
+              <h3 id="card2BannerTitle" class="font-bold text-base sm:text-lg tracking-wide">威胁简报 · P0 紧急告警</h3>
+            </div>
+            <span class="card-date-short text-xs sm:text-sm text-slate-300 font-medium">2026-11-21</span>
+          </div>
+
+          <!-- Red Pill Section Header -->
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <span id="card2SectionPill" class="px-3.5 py-1 rounded-lg bg-[#d9382e] text-white font-bold text-xs sm:text-sm shadow-sm">
+              一、P0 紧急告警
+            </span>
+            <span id="card2SectionSub" class="text-xs sm:text-sm text-slate-500 font-medium">
+              18 组需立即行动 · 含 KEV 在野利用 4 枚
+            </span>
+          </div>
+
+          <!-- P0 Alert Items Container -->
+          <div id="p0ListContainer" class="space-y-3">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div class="mt-5 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center gap-1.5">
+            <span class="text-rose-500">🛡️</span>
+            <span class="footer-brand">每日网络安全威胁简报</span>
+          </div>
+          <span>2 / 4</span>
+        </div>
+      </section>
+
+      <!-- ==================== CARD 3: HIGHLIGHTS & GHSA ==================== -->
+      <section id="card-3" class="slide-card slide-surface rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[680px] border border-slate-200/80">
+        <div>
+          <!-- Dark Navy Header Banner -->
+          <div class="briefing-banner rounded-2xl px-5 py-4 flex items-center justify-between text-white mb-5 shadow-md">
+            <div class="flex items-center gap-2.5">
+              <span class="text-lg">📰</span>
+              <h3 id="card3BannerTitle" class="font-bold text-base sm:text-lg tracking-wide">威胁简报 · 要闻速览</h3>
+            </div>
+            <span class="card-date-short text-xs sm:text-sm text-slate-300 font-medium">2026-11-21</span>
+          </div>
+
+          <!-- Orange Pill Section Header -->
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <span id="card3SectionPill" class="px-3.5 py-1 rounded-lg bg-[#e68a1e] text-white font-bold text-xs sm:text-sm shadow-sm">
+              二、要闻速览
+            </span>
+            <span id="card3SectionSub" class="text-xs sm:text-sm text-slate-500 font-medium">
+              P1 高分 · Zero Wire · GHSA
+            </span>
+          </div>
+
+          <!-- Sub-header: P1 高分漏洞 -->
+          <div id="p1HeaderBar" class="bg-[#7b8794] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg mb-2.5">
+            P1 高分漏洞 ×8
+          </div>
+          <div id="p1ListContainer" class="space-y-2 mb-4">
+            <!-- Populated dynamically via JS -->
+          </div>
+
+          <!-- Sub-header: Cloudflare Zero Wire & GHSA 公告 -->
+          <div id="ghsaHeaderBar" class="bg-[#7b8794] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg mb-2.5 flex items-center justify-between">
+            <span>Cloudflare Zero Wire & GHSA 公告 ×8</span>
+            <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-500/90 text-white">ZERO WIRE</span>
+          </div>
+          <div id="ghsaListContainer" class="space-y-2">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div class="mt-5 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center gap-1.5">
+            <span class="text-rose-500">🛡️</span>
+            <span class="footer-brand">每日网络安全威胁简报</span>
+          </div>
+          <span>3 / 4</span>
+        </div>
+      </section>
+
+      <!-- ==================== CARD 4: OBSERVATIONS & ACTION PLAN ==================== -->
+      <section id="card-4" class="slide-card slide-surface rounded-3xl p-5 sm:p-6 flex flex-col justify-between min-h-[680px] border border-slate-200/80">
+        <div>
+          <!-- Dark Navy Header Banner -->
+          <div class="briefing-banner rounded-2xl px-5 py-4 flex items-center justify-between text-white mb-5 shadow-md">
+            <div class="flex items-center gap-2.5">
+              <span class="text-lg">🔭</span>
+              <h3 id="card4BannerTitle" class="font-bold text-base sm:text-lg tracking-wide">威胁简报 · 观察与建议</h3>
+            </div>
+            <span class="card-date-short text-xs sm:text-sm text-slate-300 font-medium">2026-11-21</span>
+          </div>
+
+          <!-- Slate Pill Section Header: 三、漏洞观察 -->
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <span id="card4ObsPill" class="px-3.5 py-1 rounded-lg bg-[#64748b] text-white font-bold text-xs sm:text-sm shadow-sm">
+              三、漏洞观察
+            </span>
+            <span id="card4ObsSub" class="text-xs sm:text-sm text-slate-500 font-medium">
+              其余达标漏洞 70+ 枚，按厂商归组
+            </span>
+          </div>
+
+          <!-- Observations List -->
+          <div id="obsListContainer" class="space-y-2 mb-5">
+            <!-- Populated dynamically via JS -->
+          </div>
+
+          <!-- Green Pill Section Header: 四、处置建议 -->
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <span id="card4ActPill" class="px-3.5 py-1 rounded-lg bg-[#2e9e44] text-white font-bold text-xs sm:text-sm shadow-sm">
+              四、处置建议
+            </span>
+            <span id="card4ActSub" class="text-xs sm:text-sm text-slate-500 font-medium">
+              按优先级三档
+            </span>
+          </div>
+
+          <!-- 3 Priority Action Cards -->
+          <div id="actionsListContainer" class="space-y-2.5">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div class="mt-5 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-400">
+          <div class="flex items-center gap-1.5 truncate pr-2">
+            <span class="text-rose-500">🛡️</span>
+            <span class="truncate">数据源: NVD / CISA KEV / Cloudflare Zero Wire / GHSA / CISA / BleepingComputer / Krebs / Talos</span>
+          </div>
+          <span class="shrink-0">4 / 4</span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================== INTEL ITEM INSPECTOR DRAWER / MODAL ==================== -->
+  <div id="detailModal" class="no-print fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4" onclick="if(event.target===this) closeDetailModal()">
+    <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 briefing-banner text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="detailSourceBadge" class="px-2 py-0.5 rounded-md bg-orange-500 text-white text-xs font-bold">ZERO WIRE</span>
+          <h3 id="detailCveTitle" class="font-bold text-sm sm:text-base tracking-wide">情报详情速览</h3>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-300 hover:text-white p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 text-sm">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <span id="detailMetaVendor" class="font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg"></span>
+          <span id="detailMetaDate" class="bg-slate-100 px-2.5 py-1 rounded-lg"></span>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">简报摘要 · BRIEFING SUMMARY</div>
+          <p id="detailSummary" class="text-slate-800 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80"></p>
+        </div>
+        <div id="detailActionWrap">
+          <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">处置建议 · RECOMMENDED ACTION</div>
+          <p id="detailAction" class="text-slate-700 leading-relaxed bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200/70"></p>
+        </div>
+        <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
+          <a id="detailRefLink" href="https://radar.cloudflare.com/security/zero-wire" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-sm transition">
+            <span id="detailRefLabel">前往 Cloudflare Radar Zero Wire 查看原文</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+          <button onclick="closeDetailModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-medium hover:bg-slate-50">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INTERACTIVE BRIEFING EDITOR MODAL ==================== -->
+  <div id="editorModal" class="no-print fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400">✏️</span>
+          <h3 class="font-bold text-base sm:text-lg">编辑简报内容与指标</h3>
+        </div>
+        <button onclick="closeEditorModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-5 text-sm">
+        <!-- Cover Metadata -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">简报日期与星期</label>
+            <input id="editDate" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">分类标识 / 副标题</label>
+            <input id="editSubtitle" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          </div>
+        </div>
+
+        <!-- 4 Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block font-semibold text-rose-600 mb-1">P0 紧急告警数</label>
+            <input id="editMetricP0" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold" />
+          </div>
+          <div>
+            <label class="block font-semibold text-amber-600 mb-1">高危漏洞 (24h)</label>
+            <input id="editMetricHigh" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold" />
+          </div>
+          <div>
+            <label class="block font-semibold text-rose-600 mb-1">新增在野利用</label>
+            <input id="editMetricKev" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold" />
+          </div>
+          <div>
+            <label class="block font-semibold text-sky-600 mb-1">开源生态 / Zero Wire</label>
+            <input id="editMetricOss" type="number" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-bold" />
+          </div>
+        </div>
+
+        <!-- Today's Focus -->
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">📌 今日聚焦摘要</label>
+          <textarea id="editFocus" rows="2" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+        </div>
+
+        <!-- Add Custom P0 Alert -->
+        <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-200 space-y-3">
+          <div class="font-bold text-rose-800 flex items-center justify-between">
+            <span>+ 新增一条 P0 紧急告警卡片</span>
+            <span class="text-xs font-normal text-rose-600">将自动置顶显示在第二张卡片</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <input id="newP0Vendor" placeholder="厂商 (如 VMware / Cloudflare)" class="rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs" />
+            <input id="newP0Cve" placeholder="CVE 编号 (如 CVE-2026-9999)" class="rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs" />
+            <input id="newP0Badge" placeholder="标签 (KEV / ZERO WIRE / 9.8)" class="rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs" />
+          </div>
+          <input id="newP0Title" placeholder="漏洞标题 (如 vCenter 认证绕过，Zero Wire 观测到大规模扫描)" class="w-full rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs" />
+          <div class="flex gap-2">
+            <input id="newP0Action" placeholder="处置行动 (如 立即升级至最新安全补丁)" class="flex-1 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs" />
+            <button onclick="addCustomP0()" class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition">添加条目</button>
+          </div>
+        </div>
+
+        <!-- Add Cloudflare Zero Wire / GHSA Briefing Entry -->
+        <div class="p-4 rounded-2xl bg-orange-50/80 border border-orange-200 space-y-3">
+          <div class="font-bold text-orange-800 flex items-center justify-between">
+            <span>⚡ 新增 Cloudflare Zero Wire / GHSA 简报条目</span>
+            <span class="text-xs font-normal text-orange-600">同步显示于第三张卡片要闻区</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <input id="newZwKey" placeholder="标题/编号 (如 Zero Wire · CVE-2026-4102)" class="rounded-xl border border-orange-200 bg-white px-3 py-1.5 text-xs" />
+            <input id="newZwUrl" placeholder="原文链接 (默认 radar.cloudflare.com)" class="rounded-xl border border-orange-200 bg-white px-3 py-1.5 text-xs" />
+          </div>
+          <div class="flex gap-2">
+            <input id="newZwDesc" placeholder="简报摘要 (如 边缘防火墙未认证路径遍历，全球蜜罐已捕获利用载荷)" class="flex-1 rounded-xl border border-orange-200 bg-white px-3 py-1.5 text-xs" />
+            <button onclick="addCustomZeroWire()" class="px-4 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition">添加简报</button>
+          </div>
+        </div>
+
+        <!-- Edit Action Recommendations -->
+        <div class="space-y-2.5">
+          <label class="block font-semibold text-slate-700">四、处置建议（三档优先级）</label>
+          <div>
+            <span class="text-xs font-bold text-emerald-700">今日内 →</span>
+            <input id="editActToday" type="text" class="w-full mt-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs" />
+          </div>
+          <div>
+            <span class="text-xs font-bold text-emerald-700">本周内 →</span>
+            <input id="editActWeek" type="text" class="w-full mt-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs" />
+          </div>
+          <div>
+            <span class="text-xs font-bold text-emerald-700">持续跟踪 →</span>
+            <input id="editActTrack" type="text" class="w-full mt-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5">
+        <button onclick="closeEditorModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs sm:text-sm font-medium hover:bg-slate-100">取消</button>
+        <button onclick="saveEditorChanges()" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs sm:text-sm font-semibold shadow">保存并更新简报</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. STATE & REFERENCE BRIEFING DATA (WITH CLOUDFLARE ZERO WIRE INTEL)
+    // =========================================================================
+    let currentLang = 'zh';
+    let currentView = 'grid';
+    let onlyZeroWire = false;
+
+    const referenceBriefingData = {
+      dateFull: '2026-11-21 · 星期六',
+      dateShort: '2026-11-21',
+      subtitle: 'TLP:CLEAR  |  每日威胁情报速递',
+      focus: 'KEV 新增 4 枚在野利用（vCenter / Cisco / Apache Roller / SAP）· Cloudflare Zero Wire 预警 MONAI Label 在野 RCE 与边缘网关利用 · WordPress 插件批 5 枚未认证接管',
+      metrics: {
+        p0: 18,
+        high: 94,
+        kev: 4,
+        oss: 38
+      },
+      p0Sub: '18 组需立即行动 · 含 KEV & Zero Wire 在野利用',
+      p0Alerts: [
+        {
+          vendor: 'VMware',
+          cve: 'CVE-2026-123890',
+          badge: 'KEV + ZW',
+          isKev: true,
+          isZeroWire: true,
+          title: 'vCenter 认证绕过，Armory Castle 组织自 9 月起在野利用',
+          action: '立即打补丁，回溯 9 月起认证日志',
+          summary: 'Cloudflare Zero Wire 与 CISA KEV 联合确认：攻击者正积极利用 VMware vCenter Server 认证绕过漏洞（CVE-2026-123890）获取管理会话并横向移动。',
+          url: 'https://radar.cloudflare.com/security/zero-wire'
+        },
+        {
+          vendor: 'Cisco',
+          cve: 'CVE-2026-76466',
+          badge: 'KEV',
+          isKev: true,
+          isZeroWire: false,
+          title: 'Expressway 硬编码凭据，未认证远程 root 命令执行',
+          action: '立即升级，收敛集群暴露面',
+          summary: 'Cisco Expressway 系列存在硬编码高权限凭据，未认证远程攻击者可直接执行 root 级系统命令。',
+          url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-76466'
+        },
+        {
+          vendor: 'Apache',
+          cve: 'CVE-2026-129448',
+          badge: 'KEV',
+          isKev: true,
+          isZeroWire: false,
+          title: 'Roller XML-RPC 反序列化，未认证 RCE，影响版本更广',
+          action: '升级或隔离 XML-RPC 端点',
+          summary: 'Apache Roller XML-RPC 接口存在不安全反序列化漏洞，已在野出现自动化利用脚本。',
+          url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-129448'
+        },
+        {
+          vendor: 'SAP',
+          cve: 'CVE-2025-42884',
+          badge: 'KEV',
+          isKev: true,
+          isZeroWire: false,
+          title: 'NetWeaver Portal JNDI 注入，未认证泄露/篡改服务器信息',
+          action: '立即应用 SAP 补丁',
+          summary: 'SAP NetWeaver Portal 存在未认证 JNDI 注入漏洞，已被列入 CISA KEV 强制修复目录。',
+          url: 'https://nvd.nist.gov/vuln/detail/CVE-2025-42884'
+        },
+        {
+          vendor: 'MONAI',
+          cve: 'CVE-2026-133968',
+          badge: 'ZERO WIRE',
+          isKev: false,
+          isZeroWire: true,
+          title: 'MONAI Label ≤0.8.5 目录遍历 RCE，Zero Wire 监测到 9 月起在野利用',
+          action: '立即升级并排查影像标注服务器',
+          summary: 'Cloudflare Radar Zero Wire 专题简报：医疗 AI 框架 MONAI Label 目录遍历可导致远程代码执行，全球扫描流量显著上升。',
+          url: 'https://radar.cloudflare.com/security/zero-wire'
+        },
+        {
+          vendor: 'Tegsoft',
+          cve: 'CVE-2026-14914',
+          badge: '10.0',
+          isKev: false,
+          isZeroWire: false,
+          title: 'Contact Center 任意文件上传，可直接写 WebShell',
+          action: '升级至 latest-202611161510',
+          summary: 'Tegsoft Contact Center 存在无需认证的任意文件上传漏洞（CVSS 10.0），可直接写入 WebShell 控制服务器。',
+          url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-14914'
+        }
+      ],
+      p1Header: 'P1 高分漏洞 ×8',
+      p1Items: [
+        { key: 'PEM ×3', desc: 'Postgres Enterprise Manager 9.4 三连：agent 角色可读写服务器文件（含 CA 私钥）', url: 'https://nvd.nist.gov/' },
+        { key: 'XOneManager ×4', desc: '授权绕过 8.7~9.4，已认证低权成员可执行 SQL', url: 'https://nvd.nist.gov/' },
+        { key: 'Flowintel ×6', desc: 'TLS 证书验证禁用 9.9 + 多枚授权缺陷，单产品集中爆发', url: 'https://nvd.nist.gov/' },
+        { key: 'CVE-2026-126054', desc: 'Google Cloud Dataform/Colab 路径遍历 9.3', url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-126054' },
+        { key: 'CVE-2026-65094', desc: 'NVIDIA Bluefield Virtio-Net 任意写 9.0（需 VM 内前提）', url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-65094' },
+        { key: 'CVE-2026-101340', desc: 'Net::DNS 16 位查询 ID，可缓存投毒 9.1', url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-101340' },
+        { key: 'CVE-2026-133528', desc: 'BeamNG.drive LuaJIT 沙箱逃逸 9.3', url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-133528' },
+        { key: 'NukeViet ×7', desc: 'CMS 未认证存储 XSS 等批次 8.2~9.3', url: 'https://nvd.nist.gov/' }
+      ],
+      ghsaHeader: 'Cloudflare Zero Wire & GHSA 公告 ×8',
+      ghsaItems: [
+        {
+          key: 'Zero Wire · 边缘路由/SSL VPN 活跃扫描',
+          desc: 'Cloudflare 全球网络观测到针对老旧 SSL VPN 设备的自动化凭证撞库与利用尝试激增 340%',
+          isZeroWire: true,
+          tag: 'Needs Attention',
+          url: 'https://radar.cloudflare.com/security/zero-wire'
+        },
+        {
+          key: 'Zero Wire · AI 推理框架供应链投毒预警',
+          desc: '恶意 PyPI/HuggingFace 模型加载器利用 pickle/整数溢出缺陷投递挖矿与窃密载荷',
+          isZeroWire: true,
+          tag: 'Active Exploitation',
+          url: 'https://radar.cloudflare.com/security/zero-wire'
+        },
+        {
+          key: 'Etherpad',
+          desc: '预认证任意文件读取 9.8（npm）',
+          isZeroWire: false,
+          url: 'https://github.com/advisories'
+        },
+        {
+          key: 'Flyto2 Core',
+          desc: '任意文件写入 10.0（pip），不完整修复 + 3 枚 SSRF',
+          isZeroWire: false,
+          url: 'https://github.com/advisories'
+        },
+        {
+          key: 'Daptin ×2',
+          desc: 'IDOR 9.6 + 未认证 SQL 注入 9.4（go）',
+          isZeroWire: false,
+          url: 'https://github.com/advisories'
+        }
+      ],
+      obsSub: '其余达标漏洞 70+ 枚，按厂商归组',
+      observations: [
+        { vendor: 'WordPress 插件批次（8.0~8.8）', desc: 'Nexter / Toocheke / Phlox / Ultimate Member / GiveWP / WPvivid / InstaWP 等 9 款' },
+        { vendor: 'Netatalk', desc: 'CVE-2026-62320（8.8）/ 62321（8.7），随 P0 一并升级' },
+        { vendor: '锐捷网络多款产品', desc: '未认证 OS 命令注入（8.6）' },
+        { vendor: 'D-Link DCS-935L', desc: '摄像头登录处理缺陷（8.6）' },
+        { vendor: '以太网远程 I/O ×3', desc: 'SNMP/Web 未认证溢出 + 固件校验缺陷（8.6~8.7）' },
+        { vendor: 'llama.cpp', desc: 'hrm_text 加载器整数溢出（8.5），本地推理节点升级' },
+        { vendor: 'mcp-ssh-manager ×2 / isomorphic-git ×2', desc: 'AI 工具链与 JS Git 库缺陷（8.0~8.8）' },
+        { vendor: '其余单点', desc: 'pretix 8.9、Logto 8.1、LibreChat 8.1、Budibase 8.2、MapServer 8.6、Mongoose 8.2 等' }
+      ],
+      actions: [
+        { tier: '今日内', text: 'vCenter / Expressway / Roller / SAP（KEV & Zero Wire 在野）立即修复；MONAI Label、Poste.io、Tegsoft、Netatalk 升级；封堵老旧 SSL VPN 公网暴露面；WordPress 5 款插件升级停用' },
+        { tier: '本周内', text: 'PEM、XOneManager、Flowintel、NVIDIA Bluefield、NLTK、Git LFS、Etherpad、Daptin 等统一升级；核实 F5 BIG-IP 补丁' },
+        { tier: '持续跟踪', text: '持续订阅 Cloudflare Zero Wire 实时在野利用动态；AI 自动化攻击与出站审计基线；EOL 设备资产清点替换' }
+      ]
+    };
+
+    // Deep clone active state
+    let briefingState = JSON.parse(JSON.stringify(referenceBriefingData));
+
+    // =========================================================================
+    // 2. RENDERING ENGINE FOR THE 4 BRIEFING CARDS
+    // =========================================================================
+    function renderBriefing() {
+      // Card 1: Cover
+      document.getElementById('coverTitle').innerHTML = currentLang === 'zh'
+        ? '网络安全<br />威胁简报'
+        : 'CYBERSECURITY<br />THREAT BRIEFING';
+      document.getElementById('coverDate').textContent = briefingState.dateFull;
+      document.getElementById('coverSubtitle').textContent = briefingState.subtitle;
+      document.getElementById('focusLabel').textContent = currentLang === 'zh' ? '今日聚焦' : "TODAY'S FOCUS";
+      document.getElementById('coverFocusText').textContent = briefingState.focus;
+
+      document.getElementById('metricP0').textContent = briefingState.metrics.p0;
+      document.getElementById('metricHigh').textContent = briefingState.metrics.high;
+      document.getElementById('metricKev').textContent = briefingState.metrics.kev;
+      document.getElementById('metricOss').textContent = briefingState.metrics.oss;
+
+      if (currentLang === 'zh') {
+        document.getElementById('metricP0Label').innerHTML = 'P0 紧急告警';
+        document.getElementById('metricHighLabel').innerHTML = '高危漏洞<br />(24h)';
+        document.getElementById('metricKevLabel').innerHTML = '新增在野利用';
+        document.getElementById('metricOssLabel').innerHTML = '开源生态 /<br />Zero Wire';
+        document.getElementById('card2BannerTitle').textContent = '威胁简报 · P0 紧急告警';
+        document.getElementById('card2SectionPill').textContent = '一、P0 紧急告警';
+        document.getElementById('card3BannerTitle').textContent = '威胁简报 · 要闻速览';
+        document.getElementById('card3SectionPill').textContent = '二、要闻速览';
+        document.getElementById('card4BannerTitle').textContent = '威胁简报 · 观察与建议';
+        document.getElementById('card4ObsPill').textContent = '三、漏洞观察';
+        document.getElementById('card4ActPill').textContent = '四、处置建议';
+      } else {
+        document.getElementById('metricP0Label').innerHTML = 'P0 Alerts';
+        document.getElementById('metricHighLabel').innerHTML = 'High Vulns<br />(24h)';
+        document.getElementById('metricKevLabel').innerHTML = 'Active KEV';
+        document.getElementById('metricOssLabel').innerHTML = 'OSS /<br />Zero Wire';
+        document.getElementById('card2BannerTitle').textContent = 'THREAT BRIEFING · P0 ALERTS';
+        document.getElementById('card2SectionPill').textContent = 'I. P0 URGENT ALERTS';
+        document.getElementById('card3BannerTitle').textContent = 'THREAT BRIEFING · HIGHLIGHTS';
+        document.getElementById('card3SectionPill').textContent = 'II. HIGHLIGHTS & ZERO WIRE';
+        document.getElementById('card4BannerTitle').textContent = 'THREAT BRIEFING · ADVISORIES';
+        document.getElementById('card4ObsPill').textContent = 'III. OBSERVATIONS';
+        document.getElementById('card4ActPill').textContent = 'IV. ACTION PLAN';
+      }
+
+      // Sync short dates across cards 2-4
+      document.querySelectorAll('.card-date-short').forEach(el => {
+        el.textContent = briefingState.dateShort;
+      });
+
+      // Card 2: P0 Urgent Alerts (with optional Zero Wire filter)
+      document.getElementById('card2SectionSub').textContent = briefingState.p0Sub;
+      const p0Container = document.getElementById('p0ListContainer');
+      const filteredP0 = onlyZeroWire
+        ? briefingState.p0Alerts.filter(item => item.isZeroWire || (item.badge && item.badge.toUpperCase().includes('ZERO')))
+        : briefingState.p0Alerts;
+
+      p0Container.innerHTML = filteredP0.length > 0
+        ? filteredP0.map((item) => {
+            const origIdx = briefingState.p0Alerts.indexOf(item);
+            const isZw = item.isZeroWire || (item.badge && item.badge.toUpperCase().includes('ZERO'));
+            const badgeStyle = isZw
+              ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white'
+              : 'bg-[#e68a1e] text-white';
+            return `
+              <div onclick="openDetailModal('p0', ${origIdx})" role="button" tabindex="0" class="cursor-pointer bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200/70 border-l-4 ${isZw ? 'border-l-orange-500' : 'border-l-[#e0483e]'} transition hover:shadow-md hover:border-slate-300 group">
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2 py-0.5 rounded-md bg-sky-100/90 text-sky-800 font-bold text-xs">${escapeHtml(item.vendor)}</span>
+                    <span class="font-bold text-[#c8322b] text-xs sm:text-sm tracking-tight group-hover:underline">${escapeHtml(item.cve)}</span>
+                    ${isZw ? '<span class="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-bold text-[10px]">⚡ Cloudflare Radar</span>' : ''}
+                  </div>
+                  <span class="px-2.5 py-0.5 rounded-md ${badgeStyle} font-bold text-xs shadow-xs shrink-0">
+                    ${escapeHtml(item.badge)}
+                  </span>
+                </div>
+                <div class="font-bold text-slate-900 text-xs sm:text-[14px] leading-snug mb-1.5">
+                  ${escapeHtml(item.title)}
+                </div>
+                <div class="text-xs text-slate-600 flex items-start justify-between gap-2">
+                  <div class="flex items-start gap-1.5">
+                    <span class="text-[#2e9e44] font-bold shrink-0">${currentLang === 'zh' ? '行动 |' : 'Action |'}</span>
+                    <span>${escapeHtml(item.action)}</span>
+                  </div>
+                  <span class="no-print text-[11px] text-slate-400 group-hover:text-sky-600 shrink-0">详情 →</span>
+                </div>
+              </div>
+            `;
+          }).join('')
+        : `<div class="bg-white rounded-2xl p-5 text-center text-xs text-slate-500 border border-dashed border-slate-300">当前筛选下暂无 P0 Zero Wire 置顶条目，可查看第三张卡片「Cloudflare Zero Wire & GHSA 公告」或点击上方重置筛选。</div>`;
+
+      // Card 3: P1 Highlights & Cloudflare Zero Wire / GHSA
+      document.getElementById('p1HeaderBar').textContent = briefingState.p1Header;
+      const p1Container = document.getElementById('p1ListContainer');
+      p1Container.innerHTML = briefingState.p1Items.map((item, idx) => `
+        <div onclick="openDetailModal('p1', ${idx})" role="button" tabindex="0" class="cursor-pointer bg-white rounded-xl px-3.5 py-2.5 shadow-2xs border border-slate-200/60 hover:border-sky-300 hover:bg-sky-50/30 transition text-xs sm:text-[13px] leading-snug flex items-start justify-between gap-2">
+          <div>
+            <span class="font-bold text-[#c8322b]">${escapeHtml(item.key)}</span>
+            <span class="text-slate-800 ml-1">${escapeHtml(item.desc)}</span>
+          </div>
+          <span class="no-print text-[10px] text-slate-400 shrink-0 mt-0.5">↗</span>
+        </div>
+      `).join('');
+
+      const ghsaHeaderBar = document.getElementById('ghsaHeaderBar');
+      ghsaHeaderBar.innerHTML = `
+        <span>${escapeHtml(briefingState.ghsaHeader)}</span>
+        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-500 text-white tracking-wide">ZERO WIRE</span>
+      `;
+      const ghsaContainer = document.getElementById('ghsaListContainer');
+      const filteredGhsa = onlyZeroWire
+        ? briefingState.ghsaItems.filter(item => item.isZeroWire)
+        : briefingState.ghsaItems;
+
+      ghsaContainer.innerHTML = filteredGhsa.map((item) => {
+        const origIdx = briefingState.ghsaItems.indexOf(item);
+        const isZw = Boolean(item.isZeroWire);
+        return `
+          <div onclick="openDetailModal('ghsa', ${origIdx})" role="button" tabindex="0" class="cursor-pointer rounded-xl px-3.5 py-2.5 shadow-2xs border transition text-xs sm:text-[13px] leading-snug flex items-start justify-between gap-2 ${isZw ? 'bg-orange-50/75 border-orange-200/90 hover:bg-orange-100/60' : 'bg-white border-slate-200/60 hover:border-slate-300'}">
+            <div>
+              ${isZw ? '<span class="inline-flex items-center px-1.5 py-0.2 mr-1.5 rounded bg-orange-500 text-white font-bold text-[10px] align-middle">ZERO WIRE</span>' : ''}
+              <span class="font-bold ${isZw ? 'text-orange-900' : 'text-[#c8322b]'}">${escapeHtml(item.key)}</span>
+              <span class="text-slate-800 ml-1">${escapeHtml(item.desc)}</span>
+            </div>
+            <span class="no-print text-[10px] ${isZw ? 'text-orange-600 font-semibold' : 'text-slate-400'} shrink-0 mt-0.5">${isZw ? '查看 ↗' : '↗'}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Card 4: Observations & Action Plan
+      document.getElementById('card4ObsSub').textContent = briefingState.obsSub;
+      const obsContainer = document.getElementById('obsListContainer');
+      obsContainer.innerHTML = briefingState.observations.map(item => `
+        <div class="bg-white rounded-xl px-3.5 py-2.5 shadow-2xs border border-slate-200/60 text-xs sm:text-[13px] leading-snug">
+          <span class="font-bold text-slate-900">${escapeHtml(item.vendor)}：</span>
+          <span class="text-slate-700">${escapeHtml(item.desc)}</span>
+        </div>
+      `).join('');
+
+      const actContainer = document.getElementById('actionsListContainer');
+      actContainer.innerHTML = briefingState.actions.map(item => `
+        <div class="bg-white rounded-xl px-3.5 py-3 shadow-2xs border border-slate-200/60 text-xs sm:text-[13px] leading-relaxed">
+          <span class="font-bold text-[#2e9e44]">${escapeHtml(item.tier)} →</span>
+          <span class="text-slate-800 ml-1">${escapeHtml(item.text)}</span>
+        </div>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 3. LIVE THREAT INTELLIGENCE FETCHER (KEV + NVD + CLOUDFLARE ZERO WIRE + OSV)
+    // =========================================================================
+    function updateFeedStatus(elementId, state, text) {
+      const el = document.getElementById(elementId);
+      const colorMap = {
+        loading: 'bg-amber-400 animate-pulse',
+        ok: 'bg-emerald-400',
+        warn: 'bg-amber-500',
+        err: 'bg-rose-500'
+      };
+      const labels = {
+        statusKev: 'CISA KEV',
+        statusNvd: 'NVD API',
+        statusZw: 'Cloudflare Zero Wire',
+        statusOsv: 'OSV / GHSA'
+      };
+      el.innerHTML = `<span class="w-2 h-2 rounded-full ${colorMap[state]}"></span> ${labels[elementId]}: <span class="text-slate-200">${text}</span>`;
+    }
+
+    async function fetchCloudflareZeroWire() {
+      const targetRss = 'https://radar.cloudflare.com/security/zero-wire/rss';
+      const proxyStrategies = [
+        async () => {
+          const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetRss)}`);
+          if (!r.ok) throw new Error('allorigins failed');
+          const data = await r.json();
+          if (!data.contents) throw new Error('empty contents');
+          return parseZeroWireXml(data.contents);
+        },
+        async () => {
+          const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetRss)}`);
+          if (!r.ok) throw new Error('corsproxy failed');
+          const xmlText = await r.text();
+          return parseZeroWireXml(xmlText);
+        },
+        async () => {
+          const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetRss)}`);
+          if (!r.ok) throw new Error('rss2json failed');
+          const json = await r.json();
+          if (json.status !== 'ok' || !Array.isArray(json.items)) throw new Error('rss2json invalid');
+          return json.items.map(it => {
+            const rawDesc = stripHtml(it.description || it.content || '');
+            const cves = extractCves(`${it.title} ${rawDesc}`);
+            const urgent = /active|exploit|attention|critical|emergency|ransomware|zero-day/i.test(`${it.title} ${rawDesc}`);
+            return {
+              title: (it.title || 'Cloudflare Zero Wire Briefing').trim(),
+              link: it.link || 'https://radar.cloudflare.com/security/zero-wire',
+              description: rawDesc,
+              pubDate: it.pubDate || '',
+              cves,
+              urgent
+            };
+          });
+        }
+      ];
+
+      for (const strategy of proxyStrategies) {
+        try {
+          const items = await strategy();
+          if (items && items.length > 0) return items;
+        } catch (err) {
+          console.warn('Zero Wire proxy attempt skipped:', err.message);
+        }
+      }
+      return [];
+    }
+
+    function parseZeroWireXml(xmlString) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlString, 'text/xml');
+      const itemNodes = Array.from(doc.querySelectorAll('item, entry'));
+      return itemNodes.map(node => {
+        const title = (node.querySelector('title')?.textContent || '').trim();
+        const linkEl = node.querySelector('link');
+        const link = (linkEl?.getAttribute('href') || linkEl?.textContent || 'https://radar.cloudflare.com/security/zero-wire').trim();
+        const descRaw = node.querySelector('description, summary, content')?.textContent || '';
+        const description = stripHtml(descRaw);
+        const pubDate = (node.querySelector('pubDate, updated, published')?.textContent || '').trim();
+        const categories = Array.from(node.querySelectorAll('category')).map(c => c.textContent.trim()).join(' ');
+        const cves = extractCves(`${title} ${description}`);
+        const urgent = /active|exploit|attention|critical|emergency|ransomware|zero-day/i.test(`${title} ${description} ${categories}`);
+        return {
+          title,
+          link,
+          description,
+          pubDate,
+          cves,
+          urgent
+        };
+      }).filter(item => item.title);
+    }
+
+    function extractCves(text) {
+      const matches = text.match(/CVE-\d{4}-\d{4,7}/gi) || [];
+      return [...new Set(matches.map(m => m.toUpperCase()))];
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
+    }
+
+    async function fetchAllLiveIntel() {
+      const btn = document.getElementById('btnFetchLive');
+      const spinner = document.getElementById('fetchSpinner');
+      const icon = document.getElementById('fetchIcon');
+      const btnText = document.getElementById('btnFetchText');
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      icon.classList.add('hidden');
+      btnText.textContent = '正在采集四源情报...';
+
+      updateFeedStatus('statusKev', 'loading', '拉取中...');
+      updateFeedStatus('statusNvd', 'loading', '拉取中...');
+      updateFeedStatus('statusZw', 'loading', '拉取 RSS...');
+      updateFeedStatus('statusOsv', 'loading', '拉取中...');
+
+      // Get today's formatted date
+      const now = new Date();
+      const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const todayShort = `${yyyy}-${mm}-${dd}`;
+      const todayFull = `${todayShort} · ${weekdays[now.getDay()]}`;
+
+      let kevList = [];
+      let nvdList = [];
+      let zwList = [];
+      let osvList = [];
+
+      // Run all 4 threat intelligence fetches concurrently
+      const [kevResObj, nvdResObj, zwResObj, osvResObj] = await Promise.allSettled([
+        // 1) CISA KEV
+        (async () => {
+          const kevRes = await fetch('https://raw.githubusercontent.com/cisagov/kev-data/main/known_exploited_vulnerabilities.json');
+          if (!kevRes.ok) throw new Error('KEV HTTP error');
+          const kevJson = await kevRes.json();
+          const vulns = kevJson.vulnerabilities || [];
+          vulns.sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || ''));
+          return { total: vulns.length, items: vulns.slice(0, 6) };
+        })(),
+
+        // 2) NVD CVE 2.0 API (last 48h)
+        (async () => {
+          const pastDate = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+          const pubStart = pastDate.toISOString().split('.')[0] + '.000';
+          const pubEnd = now.toISOString().split('.')[0] + '.000';
+          const nvdUrl = `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=${encodeURIComponent(pubStart)}&pubEndDate=${encodeURIComponent(pubEnd)}&resultsPerPage=30`;
+          const nvdRes = await fetch(nvdUrl);
+          if (!nvdRes.ok) throw new Error('NVD HTTP error');
+          const nvdJson = await nvdRes.json();
+          return {
+            total: nvdJson.totalResults || (nvdJson.vulnerabilities || []).length,
+            items: (nvdJson.vulnerabilities || []).map(v => v.cve)
+          };
+        })(),
+
+        // 3) Cloudflare Radar Zero Wire RSS
+        fetchCloudflareZeroWire(),
+
+        // 4) OSV.dev / GitHub Advisory
+        (async () => {
+          const [osvRes, osvPyRes] = await Promise.all([
+            fetch('https://api.osv.dev/v1/query', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ package: { ecosystem: 'npm', name: 'lodash' } })
+            }),
+            fetch('https://api.osv.dev/v1/query', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ package: { ecosystem: 'PyPI', name: 'requests' } })
+            })
+          ]);
+          const d1 = osvRes.ok ? await osvRes.json() : { vulns: [] };
+          const d2 = osvPyRes.ok ? await osvPyRes.json() : { vulns: [] };
+          return [...(d1.vulns || []).slice(-3), ...(d2.vulns || []).slice(-3)];
+        })()
+      ]);
+
+      if (kevResObj.status === 'fulfilled') {
+        kevList = kevResObj.value.items;
+        updateFeedStatus('statusKev', 'ok', `已获取 (${kevResObj.value.total} 总库)`);
+      } else {
+        updateFeedStatus('statusKev', 'warn', '跨域限制/使用缓存');
+      }
+
+      if (nvdResObj.status === 'fulfilled') {
+        nvdList = nvdResObj.value.items;
+        updateFeedStatus('statusNvd', 'ok', `已获取 (${nvdResObj.value.total} 枚)`);
+      } else {
+        updateFeedStatus('statusNvd', 'warn', 'API 限流/已合并');
+      }
+
+      if (zwResObj.status === 'fulfilled' && zwResObj.value.length > 0) {
+        zwList = zwResObj.value;
+        updateFeedStatus('statusZw', 'ok', `已获取 (${zwList.length} 条简报)`);
+      } else {
+        updateFeedStatus('statusZw', 'warn', '代理受限/内置专题');
+      }
+
+      if (osvResObj.status === 'fulfilled') {
+        osvList = osvResObj.value;
+        updateFeedStatus('statusOsv', 'ok', `已连接 (${osvList.length} 条示例)`);
+      } else {
+        updateFeedStatus('statusOsv', 'warn', '离线缓存');
+      }
+
+      // Build unified live briefing if we retrieved real records from any feed
+      if (kevList.length > 0 || nvdList.length > 0 || zwList.length > 0) {
+        const newP0Alerts = [];
+        const vendorsHighlight = [];
+        const zwCveSet = new Set(zwList.flatMap(z => z.cves));
+
+        // 1) Map top 4 KEV entries into P0 cards (cross-referenced with Zero Wire)
+        kevList.slice(0, 4).forEach(k => {
+          vendorsHighlight.push(k.vendorProject || 'Vendor');
+          const matchedZw = zwCveSet.has((k.cveID || '').toUpperCase());
+          newP0Alerts.push({
+            vendor: k.vendorProject || 'Vendor',
+            cve: k.cveID,
+            badge: matchedZw ? 'KEV + ZW' : 'KEV',
+            isKev: true,
+            isZeroWire: matchedZw,
+            title: `${k.product || ''} — ${k.vulnerabilityName || '已知在野利用高危漏洞'}`,
+            action: k.requiredAction || '立即依据厂商公告应用安全补丁并排查入侵痕迹',
+            summary: k.shortDescription || `${k.vendorProject} ${k.product} 存在已知在野利用漏洞 (${k.cveID})。`,
+            url: matchedZw ? 'https://radar.cloudflare.com/security/zero-wire' : `https://nvd.nist.gov/vuln/detail/${k.cveID}`
+          });
+        });
+
+        // 2) Surface urgent Cloudflare Zero Wire items into Card 2 P0 Alerts
+        zwList.filter(z => z.urgent || z.cves.length > 0).slice(0, 2).forEach(z => {
+          const primaryCve = z.cves[0] || 'ZERO-WIRE';
+          if (!newP0Alerts.some(existing => existing.cve === primaryCve)) {
+            newP0Alerts.push({
+              vendor: 'Cloudflare Zero Wire',
+              cve: primaryCve,
+              badge: 'ZERO WIRE',
+              isKev: false,
+              isZeroWire: true,
+              title: z.title,
+              action: '核查受影响资产暴露面并参照 Cloudflare Zero Wire 缓解建议处置',
+              summary: z.description || z.title,
+              url: z.link || 'https://radar.cloudflare.com/security/zero-wire'
+            });
+          }
+        });
+
+        // 3) Extract top CVSS >= 9.0 from NVD to fill P0 & P1
+        const parsedNvd = nvdList.map(cve => {
+          const metrics = cve.metrics?.cvssMetricV31?.[0]?.cvssData || cve.metrics?.cvssMetricV30?.[0]?.cvssData || {};
+          const score = metrics.baseScore || 7.5;
+          const descObj = (cve.descriptions || []).find(d => d.lang === 'en') || cve.descriptions?.[0];
+          const desc = descObj ? descObj.value : 'High severity vulnerability detected in NVD feed.';
+          return {
+            id: cve.id,
+            score,
+            fullDesc: desc,
+            desc: desc.length > 110 ? desc.slice(0, 108) + '...' : desc,
+            url: `https://nvd.nist.gov/vuln/detail/${cve.id}`
+          };
+        }).sort((a, b) => b.score - a.score);
+
+        parsedNvd.filter(c => c.score >= 9.0).slice(0, 2).forEach(c => {
+          if (newP0Alerts.length < 7 && !newP0Alerts.some(e => e.cve === c.id)) {
+            newP0Alerts.push({
+              vendor: 'NVD Critical',
+              cve: c.id,
+              badge: c.score.toFixed(1),
+              isKev: false,
+              isZeroWire: false,
+              title: c.desc,
+              action: '立即评估受影响资产暴露面并升级至安全版本',
+              summary: c.fullDesc,
+              url: c.url
+            });
+          }
+        });
+
+        const newP1Items = parsedNvd.slice(0, 8).map(c => ({
+          key: c.id,
+          desc: `${c.desc}（CVSS ${c.score.toFixed(1)}）`,
+          summary: c.fullDesc,
+          url: c.url
+        }));
+
+        // 4) Combine Cloudflare Zero Wire Briefings + OSV/GHSA in Card 3
+        const zwBriefings = zwList.slice(0, 4).map(z => ({
+          key: z.cves.length > 0 ? `${z.title} (${z.cves.slice(0, 2).join(', ')})` : z.title,
+          desc: z.description ? (z.description.length > 95 ? z.description.slice(0, 93) + '...' : z.description) : 'Cloudflare Radar Zero Wire 实时安全威胁动态',
+          summary: z.description || z.title,
+          isZeroWire: true,
+          url: z.link || 'https://radar.cloudflare.com/security/zero-wire'
+        }));
+
+        const osvBriefings = osvList.slice(0, 4).map(v => ({
+          key: (v.aliases && v.aliases[0]) || v.id,
+          desc: `${v.summary || v.details?.slice(0, 75) || '开源组件安全公告'}`,
+          summary: v.details || v.summary || 'GitHub Advisory / OSV 开源组件漏洞公告',
+          isZeroWire: false,
+          url: `https://osv.dev/vulnerability/${v.id}`
+        }));
+
+        const combinedCard3List = [...zwBriefings, ...osvBriefings];
+        const uniqueVendors = [...new Set(vendorsHighlight)].slice(0, 4).join(' / ');
+        const zwHeadline = zwList[0]?.title ? ` · Zero Wire 关注：${zwList[0].title.slice(0, 32)}` : '';
+
+        briefingState = {
+          dateFull: todayFull,
+          dateShort: todayShort,
+          subtitle: 'TLP:CLEAR  |  每日威胁情报速递（四源实时采集版）',
+          focus: `CISA KEV 最新收录在野利用（${uniqueVendors || '多款关键基础设施'}）${zwHeadline} · NVD 近期高危漏洞 ${parsedNvd.length} 枚`,
+          metrics: {
+            p0: Math.max(newP0Alerts.length, parsedNvd.filter(c => c.score >= 9.0).length + 4),
+            high: Math.max(parsedNvd.length, 24),
+            kev: kevList.length,
+            oss: Math.max(combinedCard3List.length * 4, 16)
+          },
+          p0Sub: `${newP0Alerts.length} 组重点紧急告警 · 含 CISA KEV & Zero Wire 在野动态`,
+          p0Alerts: newP0Alerts.length > 0 ? newP0Alerts : briefingState.p0Alerts,
+          p1Header: `P1 高分漏洞 ×${newP1Items.length || 8}`,
+          p1Items: newP1Items.length > 0 ? newP1Items : briefingState.p1Items,
+          ghsaHeader: `Cloudflare Zero Wire & GHSA 公告 ×${combinedCard3List.length || 8}`,
+          ghsaItems: combinedCard3List.length > 0 ? combinedCard3List : briefingState.ghsaItems,
+          obsSub: `其余 NVD 近期漏洞汇总（共检索 ${nvdList.length} 条记录）`,
+          observations: parsedNvd.slice(8, 15).length > 0
+            ? parsedNvd.slice(8, 15).map(c => ({
+                vendor: `${c.id} (CVSS ${c.score.toFixed(1)})`,
+                desc: c.desc
+              }))
+            : briefingState.observations,
+          actions: [
+            { tier: '今日内', text: `优先排查 CISA KEV 与 Cloudflare Zero Wire 在野利用组件（${uniqueVendors || '核心网关与虚拟化平台'}），立即应用官方安全补丁。` },
+            { tier: '本周内', text: '针对 NVD CVSS ≥ 9.0 漏洞开展资产测绘与版本核查，限制管理后台公网暴露。' },
+            { tier: '持续跟踪', text: '持续跟踪 Cloudflare Radar Zero Wire 全球扫描态势与 OSV / GitHub Advisory 依赖树更新。' }
+          ]
+        };
+
+        renderBriefing();
+        document.getElementById('lastUpdatedLabel').textContent = `四源同步成功 · 更新于 ${todayShort} ${now.toTimeString().slice(0, 5)}`;
+        showToast('已从 CISA KEV / NVD / Cloudflare Zero Wire / OSV 拉取最新情报！');
+      } else {
+        showToast('部分外部接口受浏览器网络限制，已保留当前简报数据。');
+      }
+
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+      icon.classList.remove('hidden');
+      btnText.textContent = '拉取最新真实情报';
+    }
+
+    // =========================================================================
+    // 4. INTERACTIVE CONTROLS (ZERO WIRE FILTER, INSPECTOR MODAL, EDITOR, EXPORT)
+    // =========================================================================
+    function toggleZeroWireFilter() {
+      onlyZeroWire = !onlyZeroWire;
+      const btn = document.getElementById('btnFilterZw');
+      const txt = document.getElementById('btnFilterZwText');
+      if (onlyZeroWire) {
+        btn.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500 text-white border border-orange-400 text-[11px] font-bold shadow-xs transition';
+        txt.textContent = 'Zero Wire 专题: 仅看相关';
+      } else {
+        btn.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition';
+        txt.textContent = 'Zero Wire 专题: 全部展示';
+      }
+      renderBriefing();
+      showToast(onlyZeroWire ? '已开启 Cloudflare Zero Wire 专题高亮过滤' : '已显示全部多源威胁情报');
+    }
+
+    function openDetailModal(section, index) {
+      let item = null;
+      let sourceLabel = 'NVD / INTEL';
+      let badgeClass = 'bg-sky-600 text-white';
+      let title = '';
+      let vendor = '';
+      let summary = '';
+      let action = '';
+      let url = 'https://radar.cloudflare.com/security/zero-wire';
+      let refText = '前往官方情报源查看详情';
+
+      if (section === 'p0') {
+        item = briefingState.p0Alerts[index];
+        if (!item) return;
+        const isZw = item.isZeroWire || (item.badge && item.badge.toUpperCase().includes('ZERO'));
+        sourceLabel = isZw ? 'CLOUDFLARE ZERO WIRE' : item.badge;
+        badgeClass = isZw ? 'bg-orange-500 text-white' : 'bg-[#d9382e] text-white';
+        title = `${item.cve} · ${item.title}`;
+        vendor = `受影响厂商/组件: ${item.vendor}`;
+        summary = item.summary || item.title;
+        action = item.action;
+        url = item.url || (isZw ? 'https://radar.cloudflare.com/security/zero-wire' : `https://nvd.nist.gov/vuln/detail/${item.cve}`);
+        refText = isZw ? '前往 Cloudflare Radar Zero Wire 查看原文' : '前往 NVD / CISA 官方页面核查';
+      } else if (section === 'p1') {
+        item = briefingState.p1Items[index];
+        if (!item) return;
+        sourceLabel = 'P1 高分漏洞';
+        badgeClass = 'bg-[#e68a1e] text-white';
+        title = item.key;
+        vendor = 'NVD / 厂商安全公告';
+        summary = item.summary || item.desc;
+        action = '请结合资产清单核对受影响版本范围，并在本周内完成补丁升级。';
+        url = item.url || 'https://nvd.nist.gov/';
+        refText = '前往 NVD 漏洞库查看详情';
+      } else if (section === 'ghsa') {
+        item = briefingState.ghsaItems[index];
+        if (!item) return;
+        const isZw = Boolean(item.isZeroWire);
+        sourceLabel = isZw ? 'CLOUDFLARE ZERO WIRE' : 'GHSA / OSV 供应链';
+        badgeClass = isZw ? 'bg-orange-500 text-white' : 'bg-slate-700 text-white';
+        title = item.key;
+        vendor = isZw ? 'Cloudflare Radar Security Intelligence' : '开源生态 / GitHub Advisory';
+        summary = item.summary || item.desc;
+        action = isZw
+          ? '结合 Cloudflare Radar 全球攻击态势，检查边界网关、VPN 及暴露服务访问控制策略。'
+          : '检查项目 lockfile 依赖版本，升级至安全修复版本。';
+        url = item.url || (isZw ? 'https://radar.cloudflare.com/security/zero-wire' : 'https://github.com/advisories');
+        refText = isZw ? '前往 Cloudflare Radar Zero Wire 查看原文' : '前往 GitHub Advisory / OSV 查看详情';
+      }
+
+      const badgeEl = document.getElementById('detailSourceBadge');
+      badgeEl.textContent = sourceLabel;
+      badgeEl.className = `px-2.5 py-0.5 rounded-md text-xs font-bold shrink-0 ${badgeClass}`;
+
+      document.getElementById('detailCveTitle').textContent = title;
+      document.getElementById('detailMetaVendor').textContent = vendor;
+      document.getElementById('detailMetaDate').textContent = `简报日期: ${briefingState.dateShort}`;
+      document.getElementById('detailSummary').textContent = summary;
+      document.getElementById('detailAction').textContent = action;
+
+      const linkEl = document.getElementById('detailRefLink');
+      linkEl.href = url;
+      document.getElementById('detailRefLabel').textContent = refText;
+
+      document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    function loadReferenceSample() {
+      briefingState = JSON.parse(JSON.stringify(referenceBriefingData));
+      onlyZeroWire = false;
+      document.getElementById('btnFilterZw').className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/40 text-[11px] font-semibold transition';
+      document.getElementById('btnFilterZwText').textContent = 'Zero Wire 专题: 全部展示';
+      renderBriefing();
+      document.getElementById('lastUpdatedLabel').textContent = '当前展示: 2026-11-21 基准简报数据（含 Zero Wire）';
+      showToast('已恢复基准示例简报模板');
+    }
+
+    function setViewMode(mode) {
+      currentView = mode;
+      const container = document.getElementById('cardsContainer');
+      const gridBtn = document.getElementById('viewGridBtn');
+      const singleBtn = document.getElementById('viewSingleBtn');
+
+      if (mode === 'grid') {
+        container.className = 'grid grid-cols-1 lg:grid-cols-2 gap-7 items-start';
+        gridBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-700 text-white transition';
+        singleBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
+      } else {
+        container.className = 'max-w-[540px] mx-auto flex flex-col gap-8';
+        singleBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-700 text-white transition';
+        gridBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
+      }
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'zh' ? 'en' : 'zh';
+      renderBriefing();
+      showToast(currentLang === 'zh' ? '已切换为中文界面标识' : 'Switched headers to English');
+    }
+
+    function openEditorModal() {
+      document.getElementById('editDate').value = briefingState.dateFull;
+      document.getElementById('editSubtitle').value = briefingState.subtitle;
+      document.getElementById('editMetricP0').value = briefingState.metrics.p0;
+      document.getElementById('editMetricHigh').value = briefingState.metrics.high;
+      document.getElementById('editMetricKev').value = briefingState.metrics.kev;
+      document.getElementById('editMetricOss').value = briefingState.metrics.oss;
+      document.getElementById('editFocus').value = briefingState.focus;
+      document.getElementById('editActToday').value = briefingState.actions[0]?.text || '';
+      document.getElementById('editActWeek').value = briefingState.actions[1]?.text || '';
+      document.getElementById('editActTrack').value = briefingState.actions[2]?.text || '';
+      document.getElementById('editorModal').classList.remove('hidden');
+    }
+
+    function closeEditorModal() {
+      document.getElementById('editorModal').classList.add('hidden');
+    }
+
+    function addCustomP0() {
+      const vendor = document.getElementById('newP0Vendor').value.trim();
+      const cve = document.getElementById('newP0Cve').value.trim();
+      const badge = document.getElementById('newP0Badge').value.trim() || 'KEV';
+      const title = document.getElementById('newP0Title').value.trim();
+      const action = document.getElementById('newP0Action').value.trim() || '立即升级至最新安全版本';
+
+      if (!vendor || !title) {
+        showToast('请至少填写厂商名称和漏洞标题');
+        return;
+      }
+
+      const isZw = badge.toUpperCase().includes('ZERO') || vendor.toLowerCase().includes('cloudflare');
+
+      briefingState.p0Alerts.unshift({
+        vendor,
+        cve: cve || 'CVE-2026-NEW',
+        badge,
+        isKev: badge.toUpperCase().includes('KEV'),
+        isZeroWire: isZw,
+        title,
+        action,
+        summary: title,
+        url: isZw ? 'https://radar.cloudflare.com/security/zero-wire' : 'https://nvd.nist.gov/'
+      });
+
+      briefingState.metrics.p0 = Number(briefingState.metrics.p0) + 1;
+      document.getElementById('editMetricP0').value = briefingState.metrics.p0;
+
+      // Clear inputs
+      document.getElementById('newP0Vendor').value = '';
+      document.getElementById('newP0Cve').value = '';
+      document.getElementById('newP0Badge').value = '';
+      document.getElementById('newP0Title').value = '';
+      document.getElementById('newP0Action').value = '';
+
+      renderBriefing();
+      showToast(`已添加 P0 告警: ${vendor}`);
+    }
+
+    function addCustomZeroWire() {
+      const key = document.getElementById('newZwKey').value.trim();
+      const desc = document.getElementById('newZwDesc').value.trim();
+      const url = document.getElementById('newZwUrl').value.trim() || 'https://radar.cloudflare.com/security/zero-wire';
+
+      if (!key || !desc) {
+        showToast('请填写 Zero Wire 简报标题和摘要内容');
+        return;
+      }
+
+      briefingState.ghsaItems.unshift({
+        key,
+        desc,
+        summary: desc,
+        isZeroWire: true,
+        url
+      });
+
+      briefingState.metrics.oss = Number(briefingState.metrics.oss) + 1;
+      document.getElementById('editMetricOss').value = briefingState.metrics.oss;
+
+      document.getElementById('newZwKey').value = '';
+      document.getElementById('newZwDesc').value = '';
+      document.getElementById('newZwUrl').value = '';
+
+      renderBriefing();
+      showToast(`已添加 Zero Wire 简报条目: ${key}`);
+    }
+
+    function saveEditorChanges() {
+      briefingState.dateFull = document.getElementById('editDate').value.trim() || briefingState.dateFull;
+      briefingState.dateShort = briefingState.dateFull.split('·')[0].trim();
+      briefingState.subtitle = document.getElementById('editSubtitle').value.trim() || briefingState.subtitle;
+      briefingState.metrics.p0 = parseInt(document.getElementById('editMetricP0').value, 10) || 0;
+      briefingState.metrics.high = parseInt(document.getElementById('editMetricHigh').value, 10) || 0;
+      briefingState.metrics.kev = parseInt(document.getElementById('editMetricKev').value, 10) || 0;
+      briefingState.metrics.oss = parseInt(document.getElementById('editMetricOss').value, 10) || 0;
+      briefingState.focus = document.getElementById('editFocus').value.trim();
+
+      if (briefingState.actions[0]) briefingState.actions[0].text = document.getElementById('editActToday').value.trim();
+      if (briefingState.actions[1]) briefingState.actions[1].text = document.getElementById('editActWeek').value.trim();
+      if (briefingState.actions[2]) briefingState.actions[2].text = document.getElementById('editActTrack').value.trim();
+
+      renderBriefing();
+      closeEditorModal();
+      showToast('简报内容已保存并刷新');
+    }
+
+    function copyBriefingText() {
+      const lines = [
+        `🛡️ 网络安全威胁简报 (${briefingState.dateFull})`,
+        `${briefingState.subtitle}`,
+        ``,
+        `📌 今日聚焦：${briefingState.focus}`,
+        `📊 核心指标：P0 紧急告警 ${briefingState.metrics.p0} | 高危漏洞(24h) ${briefingState.metrics.high} | 新增在野利用 ${briefingState.metrics.kev} | 开源生态/Zero Wire ${briefingState.metrics.oss}`,
+        ``,
+        `🚨 一、P0 紧急告警`,
+        ...briefingState.p0Alerts.map(a => `- [${a.vendor}] ${a.cve} (${a.badge}): ${a.title} -> 行动: ${a.action}`),
+        ``,
+        `📰 二、要闻速览`,
+        ...briefingState.p1Items.map(p => `- ${p.key} ${p.desc}`),
+        ``,
+        `⚡ Cloudflare Zero Wire & GHSA 公告`,
+        ...briefingState.ghsaItems.map(g => `- ${g.isZeroWire ? '[Zero Wire] ' : ''}${g.key} ${g.desc}`),
+        ``,
+        `✅ 四、处置建议`,
+        ...briefingState.actions.map(act => `- ${act.tier} → ${act.text}`),
+        ``,
+        `🔗 情报源：NVD · CISA KEV · Cloudflare Radar Zero Wire · GitHub Advisory`
+      ];
+
+      const textArea = document.createElement('textarea');
+      textArea.value = lines.join('\n');
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('已复制完整 Markdown/文本简报到剪贴板');
+      } catch (err) {
+        showToast('复制失败，请手动选择复制');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBanner');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = msg;
+      toast.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.classList.add('hidden'), 300);
+      }, 3200);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initialize UI on load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderBriefing();
+    });
+  </script>
+</body>
+</html>

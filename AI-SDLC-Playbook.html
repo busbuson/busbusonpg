@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d97757">
+<title>The AI-Native SDLC Playbook</title>
+<style>
+:root{
+  --bg:#faf9f5;--fg:#1a1a18;--muted:#6b6a64;--line:#e3e0d6;--card:#f0eee6;--accent:#d97757;--accent-soft:#f6e8e2;--dark:#1d1d1c;--darkfg:#f3f1ea;--code:#efece3;
+  --plan:#c5d3e2;--design:#cbc9dd;--build:#e9c9b6;--test:#cfe0cf;--deploy:#e6d9b0;--maintain:#d9c3d6;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#171716;--fg:#ecebe5;--muted:#9a988f;--line:#33322e;--card:#232321;--accent:#e58a6a;--accent-soft:#2e2420;--code:#1f1f1d;--dark:#0e0e0d;
+  --plan:#2b3744;--design:#32314a;--build:#4a3528;--test:#2b3d2c;--deploy:#44391d;--maintain:#40293d;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:64px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-size:18px;line-height:1.6;padding-bottom:env(safe-area-inset-bottom)}
+.sans{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header.top{position:fixed;top:0;left:0;right:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header.top .title{flex:1;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header.top button{background:var(--card);border:1px solid var(--line);color:var(--fg);border-radius:8px;font-size:14px;padding:6px 12px;font-family:inherit}
+#prog{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--accent)}
+main{max-width:720px;margin:0 auto;padding:76px 18px 80px}
+.cover{background:var(--dark);color:var(--darkfg);margin:-76px -18px 28px;padding:calc(110px + env(safe-area-inset-top)) 22px 48px}
+.cover .brand{color:var(--accent);font-family:-apple-system,sans-serif;font-weight:700;font-size:15px;letter-spacing:.02em}
+.cover .kicker{font-family:-apple-system,sans-serif;font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:#aaa;margin:34px 0 8px}
+.cover h1{font-size:2.5rem;line-height:1.05;margin:0 0 16px;font-weight:500;letter-spacing:-.02em}
+.cover p{font-size:1.1rem;margin:0;color:#ddd}
+.cover .by{margin-top:26px;font-family:-apple-system,sans-serif;font-size:13px;color:#999}
+h2{font-size:1.75rem;line-height:1.15;font-weight:500;margin:0 0 14px;letter-spacing:-.01em}
+h3{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:1rem;font-weight:700;margin:26px 0 8px}
+h4{font-family:-apple-system,sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:22px 0 6px}
+.eyebrow{font-family:-apple-system,sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
+.lead{font-size:1.15rem}
+p{margin:0 0 14px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82em;background:var(--code);padding:1px 5px;border-radius:4px;word-break:break-word}
+pre.code{background:var(--code);border-radius:10px;padding:14px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;margin:8px 0 16px;-webkit-overflow-scrolling:touch;tab-size:2}
+pre.code code{background:none;padding:0;font-size:inherit;word-break:normal}
+ol,ul{padding-left:1.3em;margin:0 0 14px}
+li{margin-bottom:8px}
+li::marker{color:var(--muted)}
+hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+.chapter{margin-top:46px}
+.stagehead{border-radius:14px;padding:26px 20px;margin:46px 0 20px;color:var(--fg)}
+.stagehead .num{font-size:3.4rem;line-height:1;opacity:.45;font-weight:400}
+.stagehead h2{font-size:2.2rem;margin:6px 0 10px}
+.stagehead p{margin:0;font-family:-apple-system,sans-serif;font-size:.95rem}
+.s1{background:var(--plan)}.s2{background:var(--design)}.s3{background:var(--build)}.s4{background:var(--test)}.s5{background:var(--deploy)}.s6{background:var(--maintain)}
+.versus{display:grid;gap:10px;margin:18px 0}
+.versus>div{border-radius:12px;padding:14px 16px;font-size:.95rem}
+.versus .trad{background:var(--card)}
+.versus .ai{background:var(--accent-soft)}
+.versus .lbl{display:block;font-family:-apple-system,sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;color:var(--muted)}
+.versus .ai .lbl{color:var(--accent)}
+.start{border-top:2px solid var(--fg);border-bottom:1px solid var(--line);padding:12px 0;margin:20px 0}
+.start .lbl{font-family:-apple-system,sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px}
+.kv{display:block;margin-bottom:10px;font-size:.95rem}
+.kv b{display:block;font-family:-apple-system,sans-serif;font-weight:500;font-size:12px;color:var(--muted);margin-bottom:1px}
+.measure .kv{border-top:1px solid var(--line);padding-top:10px}
+.measure .kv:first-of-type{border-top:0;padding-top:0}
+.callout{background:var(--accent);color:#fff;border-radius:12px;padding:16px 18px;margin:22px 0;font-size:1.05rem}
+.callout.alt{background:var(--design);color:var(--fg)}
+.side{background:var(--dark);color:var(--darkfg);border-radius:14px;padding:20px;margin:30px 0;font-size:.96rem}
+.side h3{color:#fff;font-family:Georgia,serif;font-size:1.4rem;font-weight:500;margin:4px 0 4px}
+.side .eyebrow{margin-top:0}
+.side .sub{font-family:-apple-system,sans-serif;font-size:13px;color:#999;margin-bottom:14px}
+.side b{color:#fff}
+.fig{background:var(--card);border-radius:14px;padding:16px;margin:20px 0}
+.fig .ft{font-family:-apple-system,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.fig .fn{font-weight:600;font-size:1.05rem;margin:2px 0 12px}
+.cap{font-family:-apple-system,sans-serif;font-size:13px;color:var(--muted);line-height:1.45;margin-top:10px}
+.row{display:flex;gap:4px;margin:6px 0 14px;font-family:-apple-system,sans-serif;font-size:11px}
+.row div{background:var(--dark);color:#fff;border-radius:6px;padding:9px 2px;text-align:center;flex:1;min-width:0}
+.row div.b{background:var(--accent);flex:4}
+.row div.bs{background:var(--accent);flex:.35;padding:9px 0}
+.row div.gh{background:transparent;color:var(--muted);border:1px dashed var(--line);flex:2.6}
+.loopgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-family:-apple-system,sans-serif;font-size:12px}
+.chips{display:flex;flex-direction:column;gap:2px;align-items:stretch}
+.chip{background:var(--dark);color:#fff;border-radius:6px;padding:7px;text-align:center}
+.arrow{text-align:center;color:var(--muted);line-height:1}
+.ring{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:center}
+.ring .chip{border-radius:20px;padding:7px 11px}
+.ring .hub{background:var(--accent);font-family:Georgia,serif;font-style:italic;font-size:15px;flex-basis:100%;text-align:center;border-radius:20px}
+table{width:100%;border-collapse:collapse;font-size:.88rem;margin:10px 0 6px;font-family:-apple-system,sans-serif;line-height:1.45}
+th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 6px;border-bottom:2px solid var(--fg)}
+td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{font-weight:700}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.shifts{display:block}
+.shift{border-bottom:1px solid var(--line);padding:12px 0;font-size:.95rem}
+.shift b{font-family:-apple-system,sans-serif;font-size:1rem}
+.shift .t{color:var(--muted);margin:6px 0 4px}
+.shift .t i,.shift .a i{display:block;font-style:normal;font-family:-apple-system,sans-serif;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.shift .a i{color:var(--accent)}
+.chat{display:flex;flex-direction:column;gap:10px;font-family:-apple-system,sans-serif;font-size:14px}
+.msg{background:var(--bg);border-radius:10px;padding:10px 12px}
+.msg b{font-size:13px}.msg span{color:var(--muted);font-size:12px;margin-left:6px}
+.msg.c{border-left:3px solid var(--accent)}
+.toc{display:flex;flex-direction:column}
+.toc a{display:flex;gap:14px;padding:13px 0;border-top:1px solid var(--line);color:inherit;text-decoration:none}
+.toc a:last-child{border-bottom:1px solid var(--line)}
+.toc .n{font-family:-apple-system,sans-serif;font-size:13px;color:var(--muted);padding-top:3px;min-width:22px}
+.toc b{display:block;font-weight:600;font-size:1.05rem}
+.toc small{display:block;color:var(--muted);font-family:-apple-system,sans-serif;font-size:13px;line-height:1.4}
+#drawer{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:none}
+#drawer.open{display:block}
+#drawer nav{position:absolute;right:0;top:0;bottom:0;width:min(88%,340px);background:var(--bg);padding:calc(16px + env(safe-area-inset-top)) 18px 24px;overflow-y:auto;font-family:-apple-system,sans-serif;font-size:15px}
+#drawer nav .h{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:8px}
+#drawer nav button{background:none;border:0;font-size:26px;color:var(--fg);line-height:1}
+#drawer nav a{display:block;padding:10px 0;border-top:1px solid var(--line);color:var(--fg);text-decoration:none}
+#drawer nav a.sub{padding-left:16px;font-size:14px;color:var(--muted)}
+#up{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));width:42px;height:42px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:20px;display:none;z-index:40;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.refs a{color:var(--accent);word-break:break-all}
+.refs li{font-size:.92rem;font-family:-apple-system,sans-serif}
+.refs li span{display:block;color:var(--muted);font-size:13px}
+.foot{font-family:-apple-system,sans-serif;font-size:13px;color:var(--muted);margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+@media (min-width:640px){
+  body{font-size:19px}
+  .versus{grid-template-columns:1fr 1fr}
+  .cover{border-radius:0 0 18px 18px}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:12px}
+  .kv b{margin:3px 0 0}
+}
+@media print{header.top,#up,#drawer{display:none!important}main{padding-top:0}.cover{margin-top:0;padding-top:40px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="title" id="ttl">The AI-Native SDLC Playbook</div>
+  <button id="menu" aria-label="Contents">☰ Contents</button>
+  <div id="prog"></div>
+</header>
+<div id="drawer"><nav>
+  <div class="h"><span>Contents</span><button id="close" aria-label="Close">×</button></div>
+  <a href="#top">Cover</a>
+  <a href="#ch1">01 Code is no longer the bottleneck</a>
+  <a href="#ch2">02 Plays</a>
+  <a href="#plan">Stage 1 — Plan</a>
+  <a class="sub" href="#intent">Capture as intent.md</a>
+  <a href="#design">Stage 2 — Design</a>
+  <a class="sub" href="#reqdesign">Requirements and design</a>
+  <a href="#build">Stage 3 — Build</a>
+  <a class="sub" href="#planmode">Plan mode</a>
+  <a class="sub" href="#automode">Auto mode</a>
+  <a class="sub" href="#sidebar">Legacy systems sidebar</a>
+  <a class="sub" href="#claudemd">CLAUDE.md</a>
+  <a class="sub" href="#skills">Skills</a>
+  <a class="sub" href="#bhooks">Hooks as guardrails</a>
+  <a class="sub" href="#parallel">Parallel sessions &amp; subagents</a>
+  <a href="#test">Stage 4 — Test</a>
+  <a class="sub" href="#feedback">Feedback loop</a>
+  <a class="sub" href="#evals">Continuous evals in CI</a>
+  <a href="#deploy">Stage 5 — Deploy</a>
+  <a class="sub" href="#prreview">AI in the PR review loop</a>
+  <a class="sub" href="#gates">Hooks as approval gates</a>
+  <a class="sub" href="#cicd">CI/CD integration</a>
+  <a href="#maintain">Stage 6 — Maintain</a>
+  <a class="sub" href="#loop">Closing the loop</a>
+  <a class="sub" href="#tag">Claude Tag</a>
+  <a href="#closing">Closing thoughts</a>
+  <a href="#refs">Resources</a>
+</nav></div>
+
+<main id="top">
+<section class="cover">
+  <div class="brand">✳ Claude Code</div>
+  <div class="kicker">A technical playbook</div>
+  <h1>The AI-Native SDLC Playbook</h1>
+  <p>How to transform your software development lifecycle with AI—stage by stage.</p>
+  <div class="by">Written by Louis Claxton, Anthropic</div>
+</section>
+
+<p class="eyebrow">Contents</p>
+<h2>What's in here</h2>
+<div class="toc">
+  <a href="#ch1"><span class="n">01</span><span><b>Code is no longer the bottleneck</b><small>What an AI-native SDLC is · The shifts</small></span></a>
+  <a href="#ch2"><span class="n">02</span><span><b>Plays</b><small>How to read a play · The dependency graph</small></span></a>
+  <a href="#plan"><span class="n">03</span><span><b>Stage 1 — Plan</b><small>Capture as intent.md</small></span></a>
+  <a href="#design"><span class="n">04</span><span><b>Stage 2 — Design</b><small>Requirements and design</small></span></a>
+  <a href="#build"><span class="n">05</span><span><b>Stage 3 — Build</b><small>Plan mode · Auto mode · CLAUDE.md · Skills · Hooks · Parallel sessions</small></span></a>
+  <a href="#test"><span class="n">06</span><span><b>Stage 4 — Test</b><small>Give Claude a feedback loop · Continuous evals in CI</small></span></a>
+  <a href="#deploy"><span class="n">07</span><span><b>Stage 5 — Deploy</b><small>AI in the PR review loop · Hooks as approval gates · CI/CD</small></span></a>
+  <a href="#maintain"><span class="n">08</span><span><b>Stage 6 — Maintain</b><small>Closing the loop on metrics · Claude on call with Claude Tag</small></span></a>
+  <a href="#closing"><span class="n">09</span><span><b>Closing thoughts</b><small>Resources and acknowledgments</small></span></a>
+</div>
+
+<!-- CHAPTER 1 -->
+<section class="chapter" id="ch1">
+<p class="eyebrow">Chapter 01</p>
+<h2>Code is no longer the bottleneck</h2>
+<p>Organizations have started using AI to write code at a speed unthinkable one year ago, yet the processes around the code haven't changed at the same pace. Many engineering teams still have the same approval gates, reviews, handoffs, and policies, stalling productivity gains made by using agentic coding solutions like Claude Code.</p>
+<p>The software development lifecycle (SDLC) is the process that takes software from idea to production. Most organizations run some version of the same six stages, covering planning, design, building, testing, deploying, and maintaining software. Traditionally, each stage is a discrete phase owned by a different role. Product managers write requirements, technical architects turn them into designs, engineers build the designs, QA teams at regulated enterprises verify it, releases teams ship it, and operations monitors what is running. Work moves between the phases through documents, tickets, and sign-offs.</p>
+<p>The traditional SDLC is process-heavy to ensure accountability and control at each step. However, it was designed to maximize efficiency in an era where the most time-consuming and expensive stage was writing and implementing code, which is no longer the case. PRDs, estimation rituals, and product security reviews all existed to force alignment during what could be weeks, months, or quarters of development work. The traditional SDLC also features controls that assume every step is performed by humans.</p>
+<p>The organizations generating the most value have rebuilt their process around what agentic AI can now do, while ensuring that humans stay in the loop. In this guide, we walk through several of our Applied AI team's best practices for integrating Claude internally across each stage of the SDLC to accelerate development and make processes run faster, inspired by working with our customers.</p>
+<p>When code is no longer the bottleneck and the build phase runs faster than the traditional SDLC allows for, three things become true:</p>
+<ul>
+<li>The bottleneck moves to the steps to the left and right of the build phase. This is mainly plan, review/test, and deploy, which still run at human speed.</li>
+<li>The controls stop matching reality and become intractable. Reviewing each line by hand made sense when a person had written it, but it can't keep up once agents write most of the diff.</li>
+<li>Governance costs increase because exceptions still route through meetings and committees that meet weekly or monthly.</li>
+</ul>
+
+<div class="fig">
+<div class="ft">Figure 1</div><div class="fn">The bottleneck moved</div>
+<div class="cap" style="margin:0 0 4px"><b>Before agents</b> — every stage runs at human speed</div>
+<div class="row"><div>Plan</div><div>Design</div><div class="b">Build</div><div>Test</div><div>Deploy</div><div>Maint.</div></div>
+<div class="cap" style="margin:0 0 4px"><b>After agents</b> — build runs at agent speed</div>
+<div class="row"><div>Plan</div><div>Design</div><div class="bs"></div><div>Test</div><div>Deploy</div><div>Maint.</div><div class="gh">cycle time reclaimed</div></div>
+<div class="cap">Build is no longer the constraint — the human-speed steps around it are. Human-speed stages keep their length while build collapses to hours.</div>
+</div>
+
+<p>Let's use a security bottleneck as an example. Security teams are sized for human output, so when agents multiply code output, either the review queue builds or code ships under-reviewed. A regulated organization can't accept either outcome, so its security and policy checks have to keep pace with the agents.</p>
+<p>To better realize the productivity gains of and secure agentic AI, the traditional SDLC lifecycle requires the same level of transformation as the implementation phase has undergone.</p>
+
+<h2 style="margin-top:34px">What is an AI-native SDLC?</h2>
+<p>The AI-native SDLC is a reimagined process that combines the old control objectives with new enforcement. Instead of a linear flow, the process becomes a loop, and AI is embedded at each point. The AI-native SDLC promotes automated handover and triggering of subsequent plays, helping to address the manual and clunky nature of handoff between the phases of the traditional SDLC.</p>
+
+<div class="fig">
+<div class="ft">Figure 2</div><div class="fn">The line and the loop</div>
+<div class="loopgrid">
+ <div>
+  <div class="chips"><div class="chip">Plan</div><div class="arrow">↓</div><div class="chip">Design</div><div class="arrow">↓</div><div class="chip">Build</div><div class="arrow">↓</div><div class="chip">Test</div><div class="arrow">↓</div><div class="chip">Deploy</div><div class="arrow">↓</div><div class="chip">Maintain</div></div>
+  <div class="cap"><b>Traditional — the line.</b> One slow loop back is a new release cycle.</div>
+ </div>
+ <div>
+  <div class="ring"><div class="chip hub">Claude</div><div class="chip">Plan</div><div class="chip">Design</div><div class="chip">Build</div><div class="chip">Test</div><div class="chip">Deploy</div><div class="chip">Maintain</div><div class="arrow" style="flex-basis:100%">↻ back to Plan</div></div>
+  <div class="cap"><b>AI-native — the loop.</b> Hours, not weeks, with humans above the loop instigating, directing and governing.</div>
+ </div>
+</div>
+</div>
+
+<h2 style="margin-top:34px">The shifts</h2>
+<p>The list below highlights the ends of the spectrum between traditional SDLC and AI-native SDLC, supported by Claude. Most organizations sit somewhere between the two.</p>
+<div class="shifts">
+<div class="shift"><b>Plan</b><div class="t"><i>Traditional</i>Requirements gathered by committee, distilled through workshops and sign-offs, written up by hand</div><div class="a"><i>AI-native</i>Claude synthesizes pain points straight from the sources and captures them within <code>intent.md</code> which is human readable and machine actionable</div></div>
+<div class="shift"><b>Design</b><div class="t"><i>Traditional</i>Spec written by analysts, parsed by designers</div><div class="a"><i>AI-native</i>Requirements and design compressed into one working session with an agent, guided by standards encoded as skills, versioned in git</div></div>
+<div class="shift"><b>Build</b><div class="t"><i>Traditional</i>Tests and code are handwritten and documentation is written after the main development happens</div><div class="a"><i>AI-native</i>Tests and code are generated by AI and institutional knowledge is maintained as versioned machine-readable <code>CLAUDE.md</code> files and skills</div></div>
+<div class="shift"><b>Test</b><div class="t"><i>Traditional</i>QA gates at stage boundaries</div><div class="a"><i>AI-native</i>Continuous evals woven through implementation</div></div>
+<div class="shift"><b>Deploy</b><div class="t"><i>Traditional</i>Humans review every line of code and governance occurs in review cycles, often inconsistently</div><div class="a"><i>AI-native</i>Layers of agentic review with human review reserved for regulated and critical code. Governance is enforced as the AI acts, with hooks as approval gates</div></div>
+<div class="shift"><b>Maintain</b><div class="t"><i>Traditional</i>Humans watch production for bugs</div><div class="a"><i>AI-native</i>Agents monitor live deployments. Any breached control band is diagnosed and written back into the loop as a new <code>intent.md</code></div></div>
+</div>
+<p style="margin-top:18px">The thread running through the AI-native column is the committed artifact. Each stage ends by writing one to version control (including <code>intent.md</code>, <code>spec.md</code>, <code>plan.md</code>, the diff and its tests, the PR with its review findings, and the incident record) and the next stage begins by reading it. For the early stages, .md files are the predominant artifact because a product owner and an agent can both read and act on the same file. From Build onward, the artifact is code and its records. The chain of commits is also the audit trail: who asked for what, what the agent produced, and who approved it.</p>
+<p>Humans remain accountable for every decision that requires judgment. In the agentic SDLC world, the human attention shifts along with the artifacts that must be reviewed.</p>
+<div class="callout">Every stage commits an artifact the next stage can read. Together, the intent, the spec, the plan, the diff and the review findings are the audit trail.</div>
+</section>
+
+<!-- CHAPTER 2 -->
+<section class="chapter" id="ch2">
+<p class="eyebrow">Chapter 02</p>
+<h2>Plays</h2>
+<p class="lead">The plays are the core of the playbook and are grouped into six non-linear stages (Plan, Design, Build, Test, Deploy, Maintain), which together cover the complete lifecycle.</p>
+<p>Each play covers:</p>
+<ul><li>What changes;</li><li>Getting started;</li><li>Concrete steps for implementation;</li><li>Governance considerations; and</li><li>How you measure whether it worked.</li></ul>
+<p>These steps are modular and organizations may choose to prioritize transforming different stages at different times based on their unique needs. Each play names its dependencies under "Prerequisites," which the dependency graph further illustrates.</p>
+<p>A stage ends by committing an artifact with the commit initiating the next stage. An accepted <code>intent.md</code> triggers the requirements and design pass, an approved <code>spec.md</code> triggers plan mode, a merged PR triggers the pipeline, and a breached control band in production writes the next <code>intent.md</code> and so the loop continues.</p>
+<p>First, you prompt each step by hand with the end state being a loop in which each accepted artifact fires the next gate. Human attention concentrates at the gates, reviewing what the agent flagged rather than starting each stage from scratch.</p>
+
+<div class="fig">
+<div class="ft">Figure 3</div><div class="fn">The play dependency graph</div>
+<div class="tw"><table>
+<tr><th>Play</th><th>Adopt first</th><th>Helps (not required)</th></tr>
+<tr><td>Capture intent <small>(Plan)</small></td><td>Entry point</td><td>—</td></tr>
+<tr><td>Requirements &amp; design</td><td>Capture intent</td><td>—</td></tr>
+<tr><td>Plan mode</td><td>Entry point</td><td>Requirements &amp; design</td></tr>
+<tr><td>CLAUDE.md</td><td>Entry point</td><td>—</td></tr>
+<tr><td>Skills</td><td>CLAUDE.md</td><td>—</td></tr>
+<tr><td>Subagents</td><td>CLAUDE.md</td><td>Feedback loop</td></tr>
+<tr><td>Feedback loop</td><td>Entry point</td><td>—</td></tr>
+<tr><td>Evals</td><td>CLAUDE.md, Feedback loop</td><td>—</td></tr>
+<tr><td>PR review</td><td>CLAUDE.md</td><td>Skills</td></tr>
+<tr><td>Hooks</td><td>Entry point</td><td>—</td></tr>
+<tr><td>CI/CD</td><td>PR review, Hooks</td><td>—</td></tr>
+<tr><td>Closing the loop</td><td>Capture intent, PR review, Hooks, CI/CD</td><td>—</td></tr>
+</table></div>
+<div class="cap">Plays are grouped by stage; the "Adopt first" column gives the order to adopt them in. The two are not the same. Start with any entry-point play — nothing points into it, so it needs nothing first. For any other play, the plays listed under "Adopt first" are the ones to adopt before it.</div>
+</div>
+</section>
+
+<!-- STAGE 1 -->
+<div class="stagehead s1" id="plan"><div class="num">01</div><h2>Plan</h2><p>Ideas stop waiting for someone to write them up. Intent is captured once, in the originator's own words, as a version-controlled artifact the next stage can act on.</p></div>
+
+<section id="intent">
+<p class="eyebrow">Stage 1 · Plan</p>
+<h2>Capture as intent.md</h2>
+<p class="lead">The <code>intent.md</code>, which kicks off the software development process can enter through different routes. A person has an idea, a ticket is filed, or an incident is surfaced via an alert (see <b>Stage 6: Maintenance</b>).</p>
+<p>When a person has an idea, they brainstorm with Claude and produce a markdown proto-spec. In the traditional SDLC, the same person must then convince a member of the product team to write the idea up with them or on their behalf.</p>
+<p>The proto-spec generated by Claude is human readable, version-controlled, and immediately consumable by the next stage. The proto-spec is saved as an <code>intent.md</code>.</p>
+<p>Regardless of whether the intent originates from an event trigger or an agent, the same steps apply: the product owner reviews and corrects the agent-written <code>intent.md</code> before it is committed.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>An idea passes through backlog entries, user stories, story points, and refinement meetings before anyone can act on it. Ownership transfers at each handoff, so what reaches engineering is several steps removed from what the originator meant.</div>
+<div class="ai"><span class="lbl">AI-native</span>The originator brainstorms with Claude and writes the result down as <code>intent.md</code>, a proto-spec in the originator's own terms. The artifact contains what is wanted, why, and under which constraints. Repeat processes are encoded via skills.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>None.</span></div>
+<div class="kv"><b>Infrastructure</b><span>Claude access for people who are not engineers (claude.ai or Cowork); an agreed <code>intent.md</code> template; a shared, version-controlled home for intent that the product owner watches. For a single product the simplest home is an <code>intent/</code> folder in the product repo. This setup keeps the artifact chain next to the code derived from it. A dedicated intent repo is only worth the overhead when intent spans many repositories, and in a monorepo it is a directory. The <b>Stage 3: Build</b> sidebar covers how this home relates to a Jira or requirements tool that already holds the record.</span></div></div>
+<p>Setting this up is a one-time task for the platform or engineering team. A technical team member needs to stand up the intent home and decide who can write to it, since many contributors will come from across the organization.</p>
+<p>Once the repository exists, contributors without git experience don't need to use git directly. Instead a connector to the version-control system (e.g. GitHub) lets Claude commit markdown files on their behalf from claude.ai or Cowork.</p>
+<h3>How to execute it</h3>
+<ol>
+<li>The originator describes the problem to Claude in their own words. The originator may describe what they cannot do today, who is affected by the idea, what better looks like, or what is out of scope. No formal language is required.</li>
+<li>Brainstorm until the idea is concrete. Claude asks the questions an analyst would ask: scope, users, constraints, and what success looks like.</li>
+<li>Ask Claude to write the result as <code>intent.md</code> using the organization's template, which can be encoded as a skill set up by a technical team member and signed off by a lead. This can cover the problem, proposed outcome, affected users and systems, constraints, and open questions.</li>
+<li>The originator corrects anything Claude misunderstood.</li>
+<li>Commit <code>intent.md</code> to the shared home. Author and timestamp join the record, and the product owner picks the idea up from there.</li>
+</ol>
+<h3>What it looks like (<code>intent.md</code>)</h3>
+<pre class="code"><code># Intent: claims status self-service
+Author: J. Ortiz (claims operations). Status: draft.
+
+## Problem
+Customers phone the contact center to ask where their claim is.
+Handlers spend roughly a third of call time on status-only queries.
+
+## Proposed outcome
+Customers see claim status, next step and expected date in the portal.
+
+## Affected users and systems
+Claims handlers, portal team, claims-core API.
+
+## Constraints
+No new PII in the portal session. Existing authentication only.
+
+## Open questions
+Do third-party loss adjusters need access too?</code></pre>
+<h3>Governance considerations</h3>
+<p>The evidence is the committed <code>intent.md</code>, which lists the author, the timestamp and the full revision history. It's logged in the git history of the intent home. The product owner approves, and the accept or reject decision that sends the intent into <b>Stage 2: Design</b> is recorded as the merge or the closing review.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Time from first conversation to a committed <code>intent.md</code>, read from git history on the intent home, which records author and time stamp. The expectation is to fall from a multi-week elicitation and refinement cycle to hours.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>The survival rate, or the share of <code>intent.md</code> files that the product owner accepts into <b>Stage 2: Design</b> rather than closes. The accept or reject decision is recorded as the merge of the artifact or the closed review. Additionally, the number of changes made to the <code>intent.md</code> that are made after the first <code>spec.md</code> commit for the same change.</span></div>
+</div>
+</section>
+
+<!-- STAGE 2 -->
+<div class="stagehead s2" id="design"><div class="num">02</div><h2>Design</h2><p>Requirements and design collapse into one session. Policy is applied while the spec is written, not discovered in a review weeks later.</p></div>
+
+<section id="reqdesign">
+<p class="eyebrow">Stage 2 · Design</p>
+<h2>Requirements and design</h2>
+<p class="lead">Once approved by the product owner, Claude takes the accepted <code>intent.md</code> and produces a requirements and design spec. This is guided by the organization's skills for brand, security, compliance, and UX.</p>
+<p>The product owner reviews that spec, but doesn't write it. The goal of this process is to create a spec the engineering team can plan against, with flagged areas of concern.</p>
+<p>Front-end work is the clearest example. Once the <code>intent.md</code> is accepted, the product owner mocks the design up in Claude Design (beta) from the <code>intent.md</code>, iterates on the mock, and then exports it to Claude Code to build.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>Requirements and design are separate phases run by separate teams. Analysts formalize the idea into requirements and designers then parse those back into a design. The separation exists for accountability, but it is slow and lossy.</div>
+<div class="ai"><span class="lbl">AI-native</span>Both phases happen in a single prompted session. Claude takes <code>intent.md</code> and produces a requirements and design spec, constrained by the organization's skills, with areas of concern flagged.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>Write an <code>intent.md</code> file, with brand, security, compliance, and UX policies written as skills.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A product owner with Claude access. No engineering skill is required.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The product owner opens a session with the organization's skills available and attaches the <code>intent.md</code>.</li>
+<li>The product owner's prompt points at the <code>intent.md</code>, names the constraints, and demands flagged concerns. Run it by hand at first, then codify it as an organization-level slash command. From there make the acceptance of <code>intent.md</code> in the intent home the trigger, with a non-interactive job that fires on the merge, run the pass with the organization's skills loaded, and commit <code>spec.md</code> as a pull request (the CI/CD play in <b>Stage 5: Deploy</b> covers the plumbing). From that point the product owner's first involvement is the review.</li>
+<li>The same product owner reviews the spec against the idea. Does the spec solve the stated problem, and are the open questions from <code>intent.md</code> answered or carried forward?</li>
+<li>Work through the flagged concerns first as they are the points an analyst would have escalated. The product owner resolves each one with its policy owner before engineering sees the spec.</li>
+<li>Commit <code>spec.md</code> alongside <code>intent.md</code>. The file pair records what was asked for and what was decided.</li>
+<li>The product owner decides whether the spec and intent progress to build, consulting a technical lead for anything the organization classes as higher risk. A human team mate always makes this call, and accepting the spec is what starts the plan mode play in <b>Stage 3: Build</b>.</li>
+</ol>
+<h3>What it looks like (the prompt)</h3>
+<pre class="code"><code>Read the attached intent.md and produce a requirements and design spec for integrating it into our existing codebase. Apply the skills available to you so the plan conforms to our brand guidelines, security policies and UX standards. Document the spec fully as spec.md, ready to hand to the engineering team. Describe clearly any areas of concern, especially where you cannot satisfy contradicting policies.</code></pre>
+<h3>Governance considerations</h3>
+<p>Instead of being discovered in a review weeks later, the live policy is read and applied while the spec is written. The organization's skills are applied as constraints on the spec. The spec, the prompt that produced it, and the skill versions in force are all logged in version control. The product owner signs off the spec, and routes flagged concerns to the named policy owners.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Elapsed time between the <code>intent.md</code> commit and the <code>spec.md</code> commit for the same change (two git timestamps), compared with the old requirements-plus-design cycle.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Requirements rework after build starts. Count <code>spec.md</code> commits dated after the first <code>plan.md</code> commit for the same change. Git log will give this directly.</span></div>
+</div>
+<div class="callout alt"><small style="font-family:-apple-system,sans-serif;letter-spacing:.12em;text-transform:uppercase;font-size:11px;opacity:.7">The pair</small><br>The file pair records what was asked for and what was decided: <code>intent.md</code> alongside <code>spec.md</code>, both in version control.</div>
+</section>
+
+<!-- STAGE 3 -->
+<div class="stagehead s3" id="build"><div class="num">03</div><h2>Build</h2><p>Nothing is implemented without an accepted plan. Institutional knowledge becomes files the agent reads, and the guardrails run as code rather than as habits.</p></div>
+
+<section id="planmode">
+<p class="eyebrow">Stage 3 · Build</p>
+<h2>Claude Code plan mode as the default starting point</h2>
+<p class="lead">Engineers start Claude Code sessions in plan mode, give Claude the approved <code>spec.md</code> from <b>Stage 2: Design</b>, and let it interview them, iterating on the plan until the engineer is happy with it.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>An engineer reads the design and starts writing code. How the change will be made, down to which files and which tests, stays in the engineer's head or at best a ticket comment. Nobody else can review it. The first thing a reviewer sees is the finished diff, and by then rework is slow.</div>
+<div class="ai"><span class="lbl">AI-native</span>Work starts with a written plan that Claude produces in plan mode, where it can read the codebase without changing anything. The engineer corrects the plan before code is written, and the approved version is committed as <code>plan.md</code> for later stages to check against.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>The intent artifact (<code>intent.md</code> or <code>spec.md</code>) if one exists, and the <code>CLAUDE.md</code> file helps.</span></div>
+<div class="kv"><b>Infrastructure</b><span>Claude Code with access to the repository.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The engineer starts the session in plan mode with Claude.</li>
+<li>The engineer gives Claude the <code>intent.md</code> and the <code>spec.md</code> and asks for an implementation plan that names the files that change, the order of the work, and the tests that prove it.</li>
+<li>Interrogate the plan by asking what the change could break, which step is most risky, and what other options Claude chose not to do.</li>
+<li>Iterate until an engineer who has never seen the conversation could implement the change from the plan alone.</li>
+<li>Commit the approved plan as <code>plan.md</code>. The plan joins the audit trail, and the PR review play (<b>Stage 5: Deploy</b>) checks the eventual diff against it.</li>
+<li>Accept the plan and let Claude implement. With a solid plan, the implementation is often a single pass.</li>
+<li>When implementation departs from the plan, update <code>plan.md</code> in the same commit. Consider using a hook to enforce synchronization between the two.</li>
+</ol>
+<h3>What it looks like (<code>plan.md</code>)</h3>
+<pre class="code"><code># Plan: claims status self-service (from intent.md 2026-06-02)
+
+## Files that change
+portal/src/claims/StatusPanel.tsx (new), claims-api/routes/status.py,
+claims-api/tests/test_status.py
+
+## Order of work
+1. Add the status endpoint behind existing auth.
+2. Panel against the endpoint.
+3. Wire into the portal nav.
+
+## Risks
+The claims-core API rate-limits at 50 rps; the panel must cache.
+
+## Proof
+test_status.py covers the four claim states; screenshot matches the
+approved mock.</code></pre>
+<h3>Governance considerations</h3>
+<p>Design review happens before any code is generated, when changing course is still a matter of editing a document. Plan mode enforces this itself, since Claude cannot edit files until the engineer accepts the plan. The plan and its revisions are logged along with who accepted it. Routine changes are approved by the engineer, and anything the organization classes as higher risk goes to a tech lead or architect.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Share of changes that merge from the first implementation pass, and time from plan approval to merged PR with the required data within the PR metadata.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Rework cycles per change, again from the PR metadata, and how often the merged diff still matches the committed <code>plan.md</code>.</span></div>
+</div>
+</section>
+
+<section id="automode">
+<hr>
+<h2>Claude Code on auto mode</h2>
+<p>Claude Code can also run in auto mode, where the engineer approves the plan and, once happy and iterated upon, Claude applies each change without a per-edit prompt.</p>
+<p>As the guardrails from the later plays mature (a tuned <code>CLAUDE.md</code>, skills that encode policy, hooks that block unsafe actions, and a test suite Claude can run), auto-accept becomes the default for routine work: a tight <code>spec.md</code>, a small blast radius, and code the tests already cover. The shift is now away from the user watching the agent make the edits and reviewing actions, towards the review of artifacts after longer autonomous sessions.</p>
+<p>Auto-accept mode further enables parallelism across individuals and the team when used with worktrees and is fundamental to running the SDLC autonomously and closing the loop as described in <b>Stage 6: Maintenance</b>.</p>
+</section>
+
+<section id="sidebar">
+<div class="side">
+<p class="eyebrow">Sidebar</p>
+<h3>Legacy systems and the source of truth</h3>
+<div class="sub">Applies to every artifact the process produces.</div>
+<p>Existing SDLC processes likely already track artifacts, just not in markdown files. Work items may be in Jira, requirements in a tool with regulatory traceability built in, designs in Figma, and change approvals with a change board. Those systems are hard to displace because auditors and regulators already accept them and other teams depend on them, so the AI-native SDLC has to fit around what exists.</p>
+<p>When transitioning to the AI-native SDLC, for every artifact the process produces, name one system as the source of truth, with everything else holding a copy or a link to the original. The configurations below can be set up to have one source of truth, with the choice differing per artifact:</p>
+<p><b>The repo as the source of truth.</b> The markdown artifacts are the authoritative record and the legacy system references files within commits. This can be one of the cleanest configurations for engineering-led organizations, as all records live in one tool with one timestamp authority.</p>
+<p><b>The legacy system as the source of truth.</b> Jira, ServiceNow, or the requirements tool holds the authoritative record and the markdown artifacts are working copies. Claude reads the record at the start of the session and writes the outcome back through an MCP connector in the same session that produced the spec or the plan.</p>
+<p><b>Linkage as the minimum bar.</b> All artifacts note the record ID and all legacy records contain the commit SHA of the markdown file. Linkage is a good place to start when transitioning to the AI-native SDLC, accepting that there are two sources of truth.</p>
+<p style="margin:0">Both the legacy system and the markdown-first system can coexist, so long as there is a link between the two or one is declared the source of truth.</p>
+</div>
+</section>
+
+<section id="claudemd">
+<h2>The CLAUDE.md</h2>
+<p class="lead"><code>CLAUDE.md</code> gives Claude the context a new joiner would need, covering conventions, commands, architecture, and the mistakes the team sees most often. Knowledge that used to sit in people's heads and on wikis becomes a file the agent reads at the start of every session, maintained by the whole team and iterated on whenever a mistake is made.</p>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>None.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A repo, Claude Code installed, and one engineer who knows the codebase well.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>Run <code>/init</code> in the repo. Claude generates a starting <code>CLAUDE.md</code> from what it finds.</li>
+<li>Cut the generated file down to what a new joiner would need on day one. Keep the build, test and lint commands, the conventions that matter, and the things Claude keeps getting wrong.</li>
+<li>Check <code>CLAUDE.md</code> into git at the repo root so the whole team shares one version and changes are reviewed like code.</li>
+<li>A working rule helps here. When Claude makes a mistake twice, the correction goes into <code>CLAUDE.md</code>.</li>
+<li>Keep it under a page, because Claude reads all of it at the start of a session and anything stale is taking up context for no benefit.</li>
+</ol>
+<h3>What it looks like (<code>CLAUDE.md</code>)</h3>
+<pre class="code"><code># Payments service
+
+## Commands
+- Build: make build
+- Test: make test (unit), make itest (integration, needs docker)
+- Lint: make lint (runs in CI; fix before pushing)
+
+## Conventions
+- Java 21, Spring Boot 3. No new Lombok.
+- Money is always BigDecimal, never double.
+- Every endpoint needs an integration test in src/itest.
+
+## Architecture
+- api/ holds REST controllers, core/ holds domain logic,
+  adapters/ talks to external systems.
+- Kafka events are defined in schemas/; never edit generated classes.
+
+## Things Claude gets wrong
+- Do not bump dependency versions; the platform team owns them.
+- The legacy v1/ package is frozen; changes go in v2/.</code></pre>
+<h3>Governance considerations</h3>
+<p><code>CLAUDE.md</code> is version controlled, so the instructions the agent works to are reviewable and auditable. Team conventions are applied through the file, changes to it are logged in git history, and code owners approve those changes in PR review.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>How often Claude repeats a mistake <code>CLAUDE.md</code> should have caught. The corrections or changes to the <code>CLAUDE.md</code> should be tracked within the git history.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Time to first merged PR for a new member of the team from PR history.</span></div>
+</div>
+</section>
+
+<section id="skills">
+<hr>
+<h2>Skills as institutional knowledge</h2>
+<p class="lead">Skills are how an organization makes its institutional knowledge operational. The instructions are explicit, version-controlled, applied broadly, and updated centrally when policy changes.</p>
+<p>The rule of thumb: write a skill for institutional knowledge that must be applied consistently; don't write a skill for components that belong in <code>CLAUDE.md</code> or a prompt.</p>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>None required. Having a <code>CLAUDE.md</code> helps, because it keeps the agent's working knowledge in the repo, but a skill does not depend on it.</span></div>
+<div class="kv"><b>Infrastructure</b><span>One policy with a named owner and a written source of truth.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>Pick one piece of knowledge that is enforced inconsistently today. This could be a security standard, an API design convention, or a brand rule.</li>
+<li>Write it as a skill, a folder containing a <code>SKILL.md</code> whose frontmatter says when it triggers and whose body says what to do. An engineer writes it from the policy owner's source of truth, using Claude to help.</li>
+<li>Put the skill in the repo at <code>.claude/skills/&lt;name&gt;/</code> so it ships with the code, or distribute it organization-wide through a plugin.</li>
+<li>Test that the skill triggers. Ask Claude to do the relevant task in different ways and confirm the skill loads each time.</li>
+<li>When the policy changes, change the skill and have the policy owner sign off the change.</li>
+<li>Engineers pick up the new version automatically in their next session.</li>
+</ol>
+<h3>What it looks like (<code>.claude/skills/secure-api-review/SKILL.md</code>)</h3>
+<pre class="code"><code>---
+name: secure-api-review
+description: Apply the API security standard. Use whenever creating or
+  modifying an external-facing endpoint, reviewing API code, or
+  generating an OpenAPI spec.
+---
+# Secure API review
+
+When you create or change an API endpoint:
+1. Authentication: every endpoint requires the gateway JWT;
+   no anonymous routes outside /health.
+2. Input validation: validate request bodies against the OpenAPI
+   schema and reject unknown fields.
+3. Audit: every state-changing endpoint emits an audit event with
+   actor, action, entity and timestamp.
+4. Data classification: fields tagged pii in the schema must never
+   appear in logs or error messages.
+
+Run scripts/check-endpoints.sh and include its output in your summary.</code></pre>
+<h3>Governance considerations</h3>
+<p>A skill is a control, though an advisory one. It makes Claude likely to apply the policy while the code is written, and nothing forces a session to comply with it. A policy that must always hold needs something deterministic behind the skill, such as a hook that blocks the action or a review pass that re-checks the policy at the PR. The skill makes violations rare and the hook makes them close to impossible. Skill invocations are logged in session traces, and the policy owner reviews skill changes like code.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Time from the policy owner approving a policy change to the updated skill merging, taken from the PR on the skill folder.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>PR review findings that cite the policy, which should fall towards zero once the skill is applying the policy while the code is written. Where the findings don't fall towards zero, either the skill isn't triggering or its text has drifted from the official policy.</span></div>
+</div>
+</section>
+
+<section id="bhooks">
+<hr>
+<h2>Hooks as build-time guardrails</h2>
+<p>A skill is an advisory control while a hook is the deterministic layer behind it. Most of Claude's actions are file edits and shell commands during implementation, so the build phase is where hooks can end up firing most often.</p>
+<p>Build-phase hooks can:</p>
+<ul><li>Block edits to protected paths such as generated classes or a frozen package;</li><li>Run the formatter and linter after file edits so drift never accumulates;</li><li>Keep credentials out of the diff.</li></ul>
+<p>Back any skill whose policy has to hold without exception. A hook runs on each action that matches it, so build-phase hooks should be fast and scoped to the file that changed. Heavier checks such as the full test suite belong at the commit or the PR.</p>
+<p>A hook that asks a human for approval belongs with the gates in <b>Stage 5: Deploy</b>, because an approval prompt during the build puts a person back on the critical path of all the sessions running in parallel.</p>
+</section>
+
+<section id="parallel">
+<hr>
+<h2>Parallel sessions and subagents</h2>
+<p>One engineer can drive several streams of work at once.</p>
+<p>A parallel session is another full Claude Code instance, working a separate task in its own git worktree. Each independent session knows nothing about the others, and the engineer steering them is the only thing they share.</p>
+<p>A subagent runs inside a single session as a scoped helper with its own context window and tool limits and suits jobs that recur in multiple tasks such as verifying the app runs as expected.</p>
+<p>Parallel sessions raise the number of tasks an engineer can have in flight, while subagents keep each session focused on its own task. The engineer's job is steering and reviewing all of them.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>One engineer works one task at a time and spends a significant portion of their day or week on builds, tests and reviewers. Switching between tasks while waiting is possible, but the context switch is tiring enough that few people choose to.</div>
+<div class="ai"><span class="lbl">AI-native</span>One engineer runs several Claude sessions at once, each in its own worktree on its own task. Repeated jobs become subagents with their own context and tool limits. The engineer's job shifts to orchestrating, and eventually, to building and monitoring loops.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>The <code>CLAUDE.md</code>, since all sessions read the file. The feedback loop (<b>Stage 4: Test</b>) also helps here, because less supervision from the engineer is needed when a session can verify its own work.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A git repository, since isolation comes from worktrees and permission settings tuned so sessions are not waiting on approval prompts for commands the organization considers safe.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The engineer splits the work into tasks that touch different files, using the plan from the plan mode play (<b>Stage 3: Build</b>) to see where the work is independent. Tasks that share files run in a single session, one after another.</li>
+<li>Each parallel task gets its own worktree, for example <code>claude --worktree feature-auth</code> in one terminal and <code>claude --worktree fix-rate-limit</code> in another. A worktree is a separate checkout on its own branch, which stops sessions colliding on files.</li>
+<li>Two or three sessions is a sensible starting point. The practical ceiling is how many streams one person can review properly, so add sessions only while review is keeping up.</li>
+<li>Turn repeated jobs into subagents, as defined in markdown files in <code>.claude/agents/</code>, each with a name, a description of when to use it, and the tools it may touch. Examples include a code simplifier that strips needless complexity after the main agent finishes, a verifier that runs the app and checks behavior, a researcher that explores the codebase and reports back without flooding the main context. Check the definitions into git so the whole team shares them.</li>
+</ol>
+<h3>What it looks like (<code>.claude/agents/verifier.md</code>)</h3>
+<pre class="code"><code>---
+name: verifier
+description: Runs the app and checks the change works before the
+  session reports done
+tools: Bash, Read
+---
+Start the app with make run. Exercise the changed behavior and the
+two nearest neighboring flows. Report what you ran, what you saw,
+and any behavior that does not match plan.md. Do not fix anything;
+report only.</code></pre>
+<h3>Governance considerations</h3>
+<p>More sessions means more output, so the controls have to come from configuration in the repo. Hooks and permission settings there apply to all sessions, and what a session does is logged and attributed to the engineer who ran it.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Concurrent sessions per engineer while review quality holds, counted from the OpenTelemetry export, and the share of the day spent steering rather than waiting.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Changes merged per engineer per week read alongside the rework rate as determined per the PR history.</span></div>
+</div>
+</section>
+
+<!-- STAGE 4 -->
+<div class="stagehead s4" id="test"><div class="num">04</div><h2>Test</h2><p>Every session checks its own work before a human sees it, and the configuration that steers the agent gets regression-tested like the code it writes.</p></div>
+
+<section id="feedback">
+<p class="eyebrow">Stage 4 · Test</p>
+<h2>Give Claude a feedback loop</h2>
+<p class="lead">Always give Claude a way to verify its own work, whether tests, a build, or a screenshot diff. A session checks its own work and fixes its own mistakes before an engineer sees them.</p>
+<p>The feedback loop should not be confused with a verifier subagent (<b>Stage 3: Build</b>). The feedback loop runs through the whole task as many times as the work. The verifier subagent, on the other hand, is one way to package the final check by running a fresh context window once the session believes the work is done. This way the verdict is not colored by the assumptions that produced the code.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>The signal that code works arrives late. CI minutes later, a tester days later, production weeks later. With an agent producing the code, a late signal means a person has to check all of its output, and that person becomes the bottleneck.</div>
+<div class="ai"><span class="lbl">AI-native</span>The session is given a way to check its own work before a person sees it. Run the tests, run the build, take the screenshot. Claude iterates until the check passes, so what reaches the engineer has already passed it. Setting the loop up falls to the engineer running the session, and the steps below are written for them.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>None.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A test suite and a build that run locally with one command each. For the UI work, a way for Claude to see the result is crucial, either a browser tool or a screenshot utility wired in via MCP.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>If checking the work today takes a sequence of commands and some environment knowledge, wrap it in a single target such as "make test" or "npm test" that exits non-zero on failure.</li>
+<li>In the <code>CLAUDE.md</code>'s Commands section, list each command with an example of a healthy output.</li>
+<li>State a target and make it quantifiable so Claude can check the work without asking you, for example: "All tests in test_status.py pass," "the screenshot matches the attached mock," or "the endpoint returns 200 with the new field".</li>
+<li>For bug fixes, write the failing test first. Ask Claude to reproduce the bug as a test, run it, and confirm it fails for the reason you expect. Commit that test. Only then ask Claude to make it pass without editing the test, with the test-file hook from the final step enforcing the restriction. A test that existed before the fix, and that the agent couldn't rewrite, is proof the bug is gone.</li>
+<li>For UI work, close the loop with a visual check. Give Claude a browser or screenshot tool, give it the mock, and let it iterate. Implement, screenshot, compare, and adjust. Two or three rounds is normal, and the result should improve with each one.</li>
+<li>Make verification part of "done." Instruction lives in <code>CLAUDE.md</code>. Run the tests before reporting a task complete, and show the output.</li>
+<li>Finally, the loop itself needs protecting, because an agent fixing code must not be able to weaken the check on that code. A hook that blocks edits to test files during a fix task does this. The alternative is to check the diff in review and reject any change that touches a test.</li>
+</ol>
+<h3>What it looks like (<code>CLAUDE.md</code> verification block)</h3>
+<pre class="code"><code>## Verifying your work
+- Build: make build (must finish with "Build succeeded")
+- Test: make test (all green; never skip or delete a failing test)
+- Lint: make lint (zero warnings)
+
+Run all three before reporting any task complete, and paste the
+output. If a test fails, fix the code, not the test.</code></pre>
+<h3>Governance considerations</h3>
+<div class="kv"><b>What is enforced</b><span>Verification before a task is reported done, and the block on the agent editing test files during a fix, both implemented as hooks where the organization wants them guaranteed.</span></div>
+<div class="kv"><b>What the evidence is</b><span>The literal output of "make test," the build log, or the screenshot diff that Claude ran and pasted, so the evidence comes from the toolchain.</span></div>
+<div class="kv"><b>Where it is logged</b><span>In the session transcript, which the OpenTelemetry export forwards to the organization's observability stack, and in the PR's check run, where the reviewer and any later auditor can both see it.</span></div>
+<div class="kv"><b>Who approves</b><span>The code owner reviewing the PR, who can concentrate on intent and risk because the mechanical evidence is already attached.</span></div>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>First-pass CI success rate for agent-written changes, which the CI system already supports.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Review time per PR (from the PR metadata), which should fall once the tests catch what reviewers used to catch, and the change failure rate from an incident tracker.</span></div>
+</div>
+</section>
+
+<section id="evals">
+<hr>
+<h2>Continuous evals in CI</h2>
+<p class="lead">Evals are the AI-native equivalent of stage-gate QA. In practice that means a suite that runs whenever the agent's configuration changes. When a new model is swapped in or a prompt is rewritten, the eval suite says whether the agent still does the work to the same standard.</p>
+<p>The evals should be seen as a live suite. As models improve, cases that once discriminated stop doing so and new ones must be added that arise from ongoing monitoring. Depending on the use case, some teams may prefer to run these evals offline on a set cadence rather than on every change. The steps below are for continuous evaluations.</p>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>The <code>CLAUDE.md</code> and feedback loop (<b>Stage 4: Test</b>).</span></div>
+<div class="kv"><b>Infrastructure</b><span>CI that can run Claude Code non-interactively, and an API key with budget for eval runs.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The platform engineer collects 20 to 50 real tasks from recent work with its expected/accepted outcome.</li>
+<li>Write each task as an eval, meaning the prompt plus the checks that define acceptable (tests pass, lint clean, behavior unchanged, policy followed).</li>
+<li>The suite runs non-interactively in CI on a schedule and on any change to <code>CLAUDE.md</code>, skills or hooks, since that configuration steers the agent and deserves the regression testing that code gets.</li>
+<li>Gate configuration changes on the results. A skill change that drops the pass rate gets reviewed before it merges.</li>
+<li>Each production incident gets an eval, written by the team that owned the incident, and stays in the suite as a regression test.</li>
+</ol>
+<h3>What it looks like (<code>.github/workflows/agent-evals.yml</code>)</h3>
+<pre class="code"><code>name: Agent evals
+on:
+  pull_request:
+    paths: ['CLAUDE.md', '.claude/**']
+  schedule:
+    - cron: '0 2 * * *'
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Run eval suite
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          for eval in evals/*.json; do
+            claude -p "$(jq -r '.prompt' $eval)" \
+              --allowedTools "Read,Edit,Bash(make test)" \
+              --output-format json &gt; result.json
+            ./evals/check.sh "$eval" result.json
+          done</code></pre>
+<h3>Governance considerations</h3>
+<p>Evals give QA a gate that keeps up with agent output. The pass-rate threshold is enforced as a merge check, runs are logged so results can be compared over time, and the team that owns the configuration change approves it.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>The eval pass rate over time, reported by the suite on every run, and how long a production incident takes to become a permanent eval.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Regressions caught in CI compared with regressions found in production derived from the incident tracker.</span></div>
+</div>
+</section>
+
+<!-- STAGE 5 -->
+<div class="stagehead s5" id="deploy"><div class="num">05</div><h2>Deploy</h2><p>Review runs in both directions, and governance is enforced as the agent acts. The agent does everything up to the production gate and nothing past it.</p></div>
+
+<section id="prreview">
+<p class="eyebrow">Stage 5 · Deploy</p>
+<h2>AI in the PR review loop</h2>
+<p class="lead">Claude both gives and receives reviews. It reviews incoming PRs against the organization's policies and addresses review comments on its own PRs. This allows engineers to focus on behavior in their PR review, which boils down to judging intent and risk.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>Review capacity was planned around human output. A PR waits for a reviewer to read all of it, review quality varies with the reviewer's load, and the author chases while the backlog grows.</div>
+<div class="ai"><span class="lbl">AI-native</span>All PRs get an identical set of review passes, with findings ranked by severity. Human attention moves up a level, to whether the change does what the plan intended and whether the risk is acceptable.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>An updated <code>CLAUDE.md</code> file from <b>Stage 3: Build</b>; skills if the review passes enforce written policies, defined subagents.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A repo with the Claude integration installed, either the managed Code Review (research preview) service enabled by an admin or the claude-code-action running in your own CI, with model calls through AWS Bedrock, Google Vertex or Microsoft Foundry where needed (the CI/CD play covers the deployment options). Branch protection policies that require a code owner's approval are also worthwhile.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The managed Code Review service is the fastest start. An admin enables it and selects repositories. Run the review in your own CI with the claude-code-action when you need control of the pipeline or want API calls routed through your own cloud agreement (the CI/CD play covers that plumbing).</li>
+<li>The tech lead writes the review policy as <code>REVIEW.md</code> at the repo root, divided into the passes the organization cares about: bugs and logical errors; security and vulnerabilities; compliance against the spec (<code>spec.md</code> from the requirements play), the implementation plan (<code>plan.md</code> from the plan mode play) and design principles. <code>REVIEW.md</code> also defines what counts as Important as opposed to a Nit, and what to skip.</li>
+<li>The tech lead sets the human threshold. Findings do not approve or block a PR on their own, and branch protection still requires approval from a code owner. A platform engineer who wants to gate merges on findings can read the severity counts that the check run publishes as a machine-readable tally.</li>
+<li>When a reviewer or the author tags <code>@claude</code> on a review comment, Claude addresses the comment and pushes the fix. The PR thread records both the request and the change. This fix loop runs through the claude-code-action. In the managed service, commenting <code>@claude review</code> requests a fresh review instead. For PRs Claude opened, go further and let Claude babysit the PR to merge. Teams wrap the loop in a custom slash command that sweeps the unresolved review comments and failing checks on the PR, addresses them and pushes the fixes, until the PR is green and waiting only on code owner approval.</li>
+<li>Review findings feed back into <code>CLAUDE.md</code>. When a review flags a mistake for the second time, the correction goes into <code>CLAUDE.md</code> as part of that review, and because review reads <code>CLAUDE.md</code> the mistake is caught from the next PR onwards. Review also flags when a change has made <code>CLAUDE.md</code> outdated.</li>
+<li>Once a month the tech lead tunes the setup by rating findings so the reviewer improves and by capping Nit volume in <code>REVIEW.md</code>. Generated paths and anything CI already enforces are excluded.</li>
+</ol>
+<h3>What it looks like (<code>REVIEW.md</code>)</h3>
+<pre class="code"><code># Review instructions
+
+## Passes
+Run three passes and tag each finding with its pass:
+- Bugs: logic errors, broken edge cases, subtle regressions
+- Security: injection risks, authentication gaps, PII in logs
+- Compliance: the change matches spec.md, plan.md and our design
+  principles
+
+## What Important means here
+Reserve Important for findings that would break behavior, leak data
+or breach a policy. Style and naming are nits.
+
+## Cap the nits
+Report at most five nits per review; summarize the rest as a count.
+
+## Do not report
+Generated files under src/gen/ and anything CI already enforces.</code></pre>
+<h3>Governance considerations</h3>
+<p>Separation of duties is preserved, because the agent that wrote the code has no way to approve it. The review policy in <code>REVIEW.md</code> is applied to all PRs, and findings, fixes, ratings and approvals are logged in the PR history, so the PR is the audit record. Approval comes from a human through branch protection, informed by the findings.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Time to first review, which should fall to minutes, and the share of review comments resolved without a human touching the branch with data stored directly on Git.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Defects and vulnerabilities caught before merge set against those escaping to production, from the PR history and the incident tracker.</span></div>
+</div>
+</section>
+
+<section id="gates">
+<hr>
+<h2>Hooks as approval gates</h2>
+<p class="lead">The build phase used hooks as guardrails, allowing or blocking actions with no human involved (<b>Stage 3: Build</b>). A hook can also ask, pausing the action until a specific person approves, which is what release gating needs.</p>
+<p>The play sits in <b>Stage 5: Deploy</b> because the release gate is the clearest case, but hooks are not deploy-specific: they run wherever Claude acts. For example, hooks can block edits to migrations and infra without a change ticket during <b>Stage 3: Build</b>, and stop the agent editing test files during a fix task in <b>Stage 4: Test</b>.</p>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>None.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A written list of the approvals the change process requires.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>Engineering leadership, with change management and compliance, lists the human approval gates that must survive, such as change management sign-off, release authorization, and edits to protected paths.</li>
+<li>The platform engineer expresses each gate as a hook, a script that runs before Claude acts that can allow, ask, or block.</li>
+<li>Team hooks go in <code>.claude/settings.json</code> in git, and non-negotiable hooks go in managed settings owned by the platform or IT admin, where individual engineers cannot switch them off.</li>
+<li>A block should explain itself, so when a hook stops an action the reason and the route to approval appear in Claude's output.</li>
+</ol>
+<h3>What it looks like (<code>.claude/settings.json</code>)</h3>
+<pre class="code"><code>{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/production-gate.sh"
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+<h3>And the gate itself (<code>.claude/hooks/production-gate.sh</code>)</h3>
+<pre class="code"><code>#!/bin/bash
+# Production deploys require a named release authorization
+cmd=$(jq -r '.tool_input.command' &lt; /dev/stdin)
+if [[ "$cmd" == *"deploy"* &amp;&amp; "$cmd" == *"production"* ]]; then
+  if [ -z "$RELEASE_APPROVAL" ]; then
+    echo "Production deploys need a release authorization." &gt;&amp;2
+    exit 2   # exit 2 blocks the action; the message goes to Claude
+  fi
+fi
+exit 0</code></pre>
+<h3>Governance considerations</h3>
+<p>Hooks are the approval gates. The gate condition is enforced every time, for everyone. Allow and block decisions are logged with a timestamp. The gate also defines what counts as approval, whether that's an approved change ticket or the release manager's sign-off.</p>
+
+<div class="side">
+<p class="eyebrow">Worked example</p>
+<h3>Managed settings for a regulated enterprise</h3>
+<div class="sub">Deployed by the platform team via MDM or the admin console; engineers cannot edit or override any of it.</div>
+<pre class="code" style="background:#000;color:#eee"><code>{
+  "permissions": {
+    "deny": [
+      "Read(.env*)",
+      "Read(./secrets/**)",
+      "WebFetch",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ],
+    "allow": [
+      "Bash(git *)",
+      "Bash(make build)",
+      "Bash(make test)",
+      "Bash(make lint)"
+    ],
+    "disableBypassPermissionsMode": "disable"
+  },
+  "allowManagedPermissionRulesOnly": true,
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": ["git.internal.example.com", "registry.npmjs.org"]
+    },
+    "credentials": {
+      "files": [
+        { "path": "~/.ssh", "mode": "deny" },
+        { "path": "~/.aws/credentials", "mode": "deny" }
+      ],
+      "envVars": [
+        { "name": "GITHUB_TOKEN", "mode": "deny" }
+      ]
+    }
+  },
+  "allowManagedHooksOnly": true,
+  "disableSideloadFlags": true,
+  "allowManagedMcpServersOnly": true,
+  "strictKnownMarketplaces": [
+    { "source": "github", "repo": "example-corp/approved-plugins" }
+  ],
+  "requiredMinimumVersion": "2.1.193"
+}</code></pre>
+<p class="eyebrow" style="margin-top:18px">Worked example, continued</p>
+<p><b>What each line buys, in control terms</b></p>
+<p><b>permissions.deny</b> keeps secrets out of the agent's context and blocks arbitrary network egress through tools; <b>permissions.allow</b> pre-approves the safe inner loop so the deny list doesn't turn into prompt fatigue.</p>
+<p><b>disableBypassPermissionsMode</b> plus <b>allowManagedPermissionRulesOnly</b> means no engineer, project file or command-line flag can widen the rules.</p>
+<p><b>sandbox</b> closes the gap permissions cannot. A tool-level deny on WebFetch doesn't stop a shell command reaching the network; the OS-level domain allowlist blocks egress outright.</p>
+<p><b>failIfUnavailable</b> and <b>allowUnsandboxedCommands</b> make the sandbox a gate: Claude Code refuses to start when the sandbox cannot initialize, and a command that fails inside the sandbox cannot be retried outside it.</p>
+<p><b>credentials</b> closes the gap the deny rules leave open. <code>permissions.deny</code> governs Claude's file tools, but a sandboxed shell command could still read <code>~/.ssh</code> or <code>~/.aws/credentials</code> by default; this block denies those reads and strips the named secrets from the environment of every sandboxed command.</p>
+<p><b>allowManagedHooksOnly</b> means the approval gates from this play are the only hooks that run; nothing local can add to or replace them.</p>
+<p><b>disableSideloadFlags</b> and <b>strictKnownMarketplaces</b> mean every skill, agent, hook and MCP server on an engineer's machine arrived through the organization's approved plugin marketplace, never from a home directory.</p>
+<p><b>allowManagedMcpServersOnly</b> makes the agent's tool surface an allowlist owned by the platform team.</p>
+<p><b>requiredMinimumVersion</b> refuses to start on a version below the approved floor, so the controls are enforced by a build the organization has actually assessed.</p>
+<p>Consider the above a starting point to tailor, rather than a recommendation to copy. Every deny trades against capability, and the right balance depends on the data classification of the repo. The settings reference documents every key, including the managed-only ones: <a style="color:var(--accent)" href="https://code.claude.com/docs/en/settings">code.claude.com/docs/en/settings</a></p>
+</div>
+
+<h3>How to measure it (for the hooks themselves)</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Time spent waiting on each approval gate. Every hook decision is written to the OpenTelemetry export with a timestamp and an allow or block verdict, so the wait is visible per gate.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>Gate violations reaching production before and after hooks from the incident tracker.</span></div>
+</div>
+</section>
+
+<section id="cicd">
+<hr>
+<h2>CI/CD integration and deployment</h2>
+<p class="lead">Run Claude Code non-interactively inside the CI/CD pipeline, sandbox the execution so long-running agents run safely, expose deployment through MCP integrations, and rehearse the rollback paths before the agent ever needs them.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>Pipelines run deterministic scripts, and anything that needs judgment waits for a human. For example, triaging the flaky test, writing the changelog, or working out why the build broke. Deployment and rollback are runbooks a human follows under pressure.</div>
+<div class="ai"><span class="lbl">AI-native</span>Claude runs non-interactively inside the pipeline for the judgment steps, in a sandbox with scoped credentials. Deployment tooling is exposed to the agent through MCP, so the workflow that wrote and tested the change can also ship it and roll it back, inside gates the organization defines per environment.</div>
+</div>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span>Claude in the PR review loop and hooks as approval gates, because the gates must exist before automation accelerates anything through them.</span></div>
+<div class="kv"><b>Infrastructure</b><span>A CI platform with the claude-code-action installed, or any runner that can call <code>claude -p</code>; model access through the API, or Bedrock, Foundry, or Vertex where traffic must stay on the organization's cloud agreement; MCP servers for the deployment targets; a sandbox profile for agent jobs with no standing production credentials.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The platform engineer starts with read-only judgment steps. Use <code>claude -p</code> in a pipeline job to triage a failed build, summarize a flaky test, or draft the changelog.</li>
+<li>Add write steps behind the existing gates for jobs like fixing lint, updating generated docs, or addressing review comments via the <code>@claude</code> mentions. Anything the agent writes arrives as a PR through branch protection, and the agent has no route to push to main.</li>
+<li>Execution is sandboxed. Agent jobs run in containers under a network policy with short-lived scoped tokens, and hold no production credentials by default.</li>
+<li>Expose deployment through MCP. Deploy, status, and rollback become tools, scoped per environment, so the agent's deployment powers are an allowlist rather than a shell script with credentials.</li>
+<li>Tier the autonomy by environment. In development, the agent deploys freely. In production, the agent prepares the release and the release manager authorizes it, and a hook enforces the production gate. Staging sits somewhere in the middle.</li>
+<li>Rollback should be the most rehearsed path in the pipeline, a single command that the agent can run and that is exercised regularly in staging. The closing the loop play (<b>Stage 6: Maintenance</b>) calls this rollback when a control band is breached, so it has to be proven in advance.</li>
+</ol>
+<h3>What it looks like (pipeline step)</h3>
+<pre class="code"><code>- name: Triage failed build
+  if: failure()
+  run: &gt;
+    claude -p "Read the build log at out/build.log. Identify the most
+    likely cause, say whether the failure looks flaky or real, and
+    write a three-line summary for the PR thread." &gt;&gt; triage.md</code></pre>
+<h3>Governance considerations</h3>
+<p>The governing principle is that the agent may act up to the production gate and cannot pass it. The controls below enforce this principle.</p>
+<ul>
+<li>Branch protection turns anything the agent writes into a PR, with no direct path to main.</li>
+<li>The production deploy hook blocks the release until a named release manager authorizes it.</li>
+<li>Each non-interactive run acts under the agent's own identity, so the pipeline log separates what the agent did from what the engineer who triggered it did.</li>
+<li>Per-environment permission tiers set how much the agent may do on the way to the gate.</li>
+</ul>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>The share of pipeline failures triaged without paging a human taken from the CI/CD pipeline logs.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>DevOps Research and Assessment (DORA) measures, which the CI system and deployment tooling already emit.</span></div>
+</div>
+<div class="callout">The agent may act up to the production gate, and cannot pass it.</div>
+</section>
+
+<!-- STAGE 6 -->
+<div class="stagehead s6" id="maintain"><div class="num">06</div><h2>Maintain</h2><p>The loop closes. A trigger invokes Claude with no person in the invocation path, and what it finds reenters the pipeline as intent.md.</p></div>
+
+<section id="loop">
+<p class="eyebrow">Stage 6 · Maintain</p>
+<h2>Maintenance and closing the loop</h2>
+<p class="lead">So far, we've discussed how to add Claude to each stage of the SDLC process, with each stage requiring a human to launch the initial steps. This stage, however, shifts the focus to autonomous running of Claude to close the loop.</p>
+<p>For example, a continuously running monitoring agent could, off the back of a bug ticket being raised, create an <code>intent.md</code>, and flow through the requirements, plan, build, test and review phases. <b>Stage 6: Maintenance</b> runs headless, with an independent confidence gate between stages, a deterministic check or an adversarial reviewing agent, deciding whether the previous stage's output continues or is escalated to a human.</p>
+<div class="versus">
+<div class="trad"><span class="lbl">Traditional</span>Maintenance is a reactive phase. All tickets or incidents wait on a person to act on it and restart the process. An alert fires at 3 a.m. and can be missed, a ticket can sit in the backlog until someone picks it up, and post-mortem actions may not reach the codebase at all if another fire starts first.</div>
+<div class="ai"><span class="lbl">AI-native</span>A trigger such as a control-band breach, a ticket, a channel message or a schedule invokes Claude without a person in the path. Claude diagnoses, acts only through gated routes, and writes what it finds as <code>intent.md</code>, which then goes through the stages described above. People triage and review that work, and no longer have to start it.</div>
+</div>
+<h3>Closing the loop</h3>
+<p>A deterministic script watches production and invokes Claude when a control band is breached. Monitoring of a breach is a helpful example of the pattern for the loop running autonomously, while the Claude Tag (public beta) section at the end of the stage covers work arriving through different channels.</p>
+<div class="start"><span class="lbl">Getting started</span>
+<div class="kv"><b>Prerequisites</b><span><code>intent.md</code>, which gives the loop a structured output to restart. Claude-accelerated PR reviews, hooks as an action boundary, and a rollback path for CI/CD (which the highest autonomy tier invokes).</span></div>
+<div class="kv"><b>Infrastructure</b><span>A metrics store the detection script can query (Prometheus, the CI system's API, or equivalents), read access to the repository, a way to run Claude Code non-interactively in CI, or the Agent SDK for a service that receives webhooks.</span></div></div>
+<h3>How to execute it</h3>
+<ol>
+<li>The service owner or platform engineer picks one metric with a stable rolling baseline, such as CI test failure rate, post-deploy 5xx rate, or PR cycle time.</li>
+<li>They write the detection script, typically mean and standard deviation over a rolling window with rules (Western Electric or similar) so the bands catch slow drift as well as spikes. The script is version controlled and unit tested, and detection stays entirely deterministic, with no model involved.</li>
+<li>Response tiers are defined in version-controlled config (<code>bands.yaml</code> below). At 1σ the script only logs, at 2σ it invokes Claude read-only to diagnose, and at 3σ Claude may act, though only by opening a PR into the review gate or triggering a pre-approved runbook.</li>
+<li>The trigger layer can be a scheduled workflow in GitHub or GitLab, a webhook from the existing monitoring stack, or a Cron Job inside the network. Claude runs stateless, either as a non-interactive step on a CI runner or as an Agent SDK service in a sandboxed container, and the CI/CD play covers the deployment and model-access options. Because the run is stateless and non-interactive, a loop can begin and end without anyone starting it.</li>
+<li>The agent writes its diagnosis as <code>intent.md</code> in the <b>Stage 1: Plan</b> format, covering the anomaly and its evidence, a proposed outcome, the affected systems and any open questions. From there the finding goes through the pipeline like anything else.</li>
+<li>The service owner or on-call engineer triages the queue, routing product-facing findings to the product owner. Fix now, schedule, or dismiss. Dismissals tune the bands and help to reduce noise.</li>
+<li>When a fix ships, add an eval for the incident (the continuous evals play) to ensure that such issues are protected against going forwards.</li>
+</ol>
+<h3>What it looks like (a <code>bands.yaml</code> monitoring CI test failure rate)</h3>
+<pre class="code"><code>metric: ci_test_failure_rate
+baseline: rolling_30d
+rules: western_electric
+tiers:
+  1sigma: { action: log }
+  2sigma: { action: diagnose, tools: "Read,Grep,Bash(gh run view *)" }
+  3sigma: { action: propose, routes: [pull_request, runbook:rollback-deploy] }</code></pre>
+<h3>Governance considerations</h3>
+<p>The tier boundaries are enforced from version-controlled config, with permissions and managed settings denying production access. Invocations, findings and triage decisions are logged with a timestamp. A service owner triages and approves findings, resulting changes go through the normal PR review gate, and the runbooks the agent may trigger were approved in advance.</p>
+<h3>How to measure it</h3>
+<div class="measure">
+<div class="kv"><b>Leading indicator</b><span>Time from band breach to an <code>intent.md</code> in the triage queue, against the old time from incident to post-mortem action. The detection script's log has the breach timestamp and tier of incident.</span></div>
+<div class="kv"><b>Lagging indicator</b><span>The share of findings that become merged fixes (triage queue against actual PR history), and repeat incidents of the same class, which should fall as the fixes add cases to the eval suite.</span></div>
+</div>
+<h3>Examples</h3>
+<ul>
+<li>When the CI test failure rate breaches 3σ, the agent quarantines the flaky test or opens a revert PR, and the review gate decides.</li>
+<li>When the post-deploy 5xx rate breaches 3σ with a deployment in the window, the agent triggers the existing rollback pipeline.</li>
+<li>When PR cycle time trips a drift rule, the agent writes a report for engineering leadership, which shows the harness works for process metrics as well as production ones.</li>
+</ul>
+<div class="callout alt">Detection stays deterministic. Claude is invoked once a band is breached, and the tier sets what it may do.</div>
+</section>
+
+<section id="tag">
+<hr>
+<h2>Claude on call with Claude Tag</h2>
+<p>Incidents can also arrive via other means such as workplace communication apps, like Slack or Teams. Incidents can look like a 10pm Slack message for an urgent fix on an incident channel and can now be actioned immediately.</p>
+<p>Claude Tag (public beta currently available in Slack) makes Claude a member of those channels under its own identity, so each new incident gets a first responder and the response itself becomes part of the loop and memory for future incidents. The conversation and institutional knowledge stay in the channel, with anyone in the channel able to guide and action the response. Any team member can test hypotheses, explore new options and investigate in real time with the channel history adding to the auditability.</p>
+<p>Through access to MCP Claude verifies the metric is back at baseline and confirms it in the thread, writes the post-mortem to a version-controlled lessons file that future investigations can read.</p>
+<p>Incidents are not the only work Claude Tag picks up. Tagged on a ticket over MCP or asked in the channel, Claude triages the work the same way. A small, well-bounded fix arrives as a PR through the review gate, and anything larger is written up as <code>intent.md</code> for <b>Stage 1: Plan</b>, at which point the loop starts feeding itself.</p>
+<div class="fig">
+<div class="ft">Figure 4</div><div class="fn">A first responder in the incident channel</div>
+<div class="cap" style="margin:0 0 10px"><b>#inc-checkout</b> incident channel · Claude is a member under its own identity</div>
+<div class="chat">
+<div class="msg"><b>R. Mehta</b><span>22:04</span><br>Checkout 5xx rate has been climbing since the 21:40 deploy. @claude take a look?</div>
+<div class="msg c"><b>Claude</b><span>22:07</span><br>On it — comparing error signatures against the deploy diff. Cause looks like the new cache key dropping the tenant id. The rollback was rehearsed in staging this morning; shall I run it?</div>
+<div class="msg"><b>R. Mehta</b><span>22:08</span><br>Go.</div>
+<div class="msg c"><b>Claude</b><span>22:12</span><br>Rolled back. The 5xx rate is back inside its band, and the post-mortem is written to <code>lessons/2026-06-checkout-cache.md</code>.</div>
+</div>
+<div class="cap">The channel is the audit trail: request, diagnosis, human authorization and fix all stay where the incident was handled.</div>
+</div>
+</section>
+
+<!-- CLOSING -->
+<section class="chapter" id="closing">
+<p class="eyebrow">Closing</p>
+<h2>Closing thoughts</h2>
+<p>Models and harnesses have become more advanced, allowing organizations to not just transform how they produce code, but the entire software development lifecycle. This transformation keeps human judgement central to the process and considers the governance and regulation requirements of large enterprise organizations.</p>
+<p>This guide consolidated many of the real best practices our Applied AI team executes on a daily basis for our customers, and we hope you found it a practical and actionable resource.</p>
+<div class="callout">The loop keeps running. Human judgement stays above it.</div>
+</section>
+
+<section id="refs">
+<hr>
+<p class="eyebrow">Reference</p>
+<h2>Resources and acknowledgments</h2>
+<p>The documentation below is what a platform team needs to set those controls up, in roughly the order you would roll them out.</p>
+<ul class="refs">
+<li><a href="https://code.claude.com/docs/en/admin-setup">code.claude.com/docs/en/admin-setup</a><span>Set up Claude Code for your organization — the admin decision map; start here</span></li>
+<li><a href="https://code.claude.com/docs/en/settings">code.claude.com/docs/en/settings</a><span>Settings reference and precedence, including every managed-only key</span></li>
+<li><a href="https://code.claude.com/docs/en/server-managed-settings">code.claude.com/docs/en/server-managed-settings</a><span>Server-managed settings from the Claude admin console</span></li>
+<li><a href="https://code.claude.com/docs/en/permissions">code.claude.com/docs/en/permissions</a><span>Permissions</span></li>
+<li><a href="https://code.claude.com/docs/en/sandboxing">code.claude.com/docs/en/sandboxing</a><span>Sandboxing — OS-level filesystem and network isolation</span></li>
+<li><a href="https://code.claude.com/docs/en/hooks-guide">code.claude.com/docs/en/hooks-guide</a><span>Hooks — guide</span></li>
+<li><a href="https://code.claude.com/docs/en/hooks">code.claude.com/docs/en/hooks</a><span>Hooks — reference</span></li>
+<li><a href="https://code.claude.com/docs/en/skills">code.claude.com/docs/en/skills</a><span>Skills</span></li>
+<li><a href="https://code.claude.com/docs/en/plugin-marketplaces">code.claude.com/docs/en/plugin-marketplaces</a><span>Plugins and private marketplaces — how skills and hooks are distributed organization-wide</span></li>
+<li><a href="https://code.claude.com/docs/en/managed-mcp">code.claude.com/docs/en/managed-mcp</a><span>Managed MCP — central control of the agent's tool surface</span></li>
+<li><a href="https://code.claude.com/docs/en/third-party-integrations">code.claude.com/docs/en/third-party-integrations</a><span>Enterprise deployment overview — Bedrock, Vertex, Foundry</span></li>
+<li><a href="https://code.claude.com/docs/en/network-config">code.claude.com/docs/en/network-config</a><span>Enterprise network configuration</span></li>
+<li><a href="https://code.claude.com/docs/en/monitoring-usage">code.claude.com/docs/en/monitoring-usage</a><span>Monitoring (OpenTelemetry)</span></li>
+<li><a href="https://code.claude.com/docs/en/analytics">code.claude.com/docs/en/analytics</a><span>The analytics dashboard</span></li>
+<li><a href="https://platform.claude.com/docs/en/manage-claude/compliance-api">platform.claude.com/docs/en/manage-claude/compliance-api</a><span>Compliance API — Enterprise activity feed, chat retrieval and deletion</span></li>
+<li><a href="https://code.claude.com/docs/en/security">code.claude.com/docs/en/security</a><span>Security model</span></li>
+</ul>
+<p>Thanks to Jim Blackhurst, Will Steuk, and Jamal Arif for their contributions to this guide, which was inspired by and built on much of their previous work.</p>
+<div class="foot">Mobile reading version of “The AI-Native SDLC Playbook” by Louis Claxton, Anthropic. Original content © its author; figures redrawn for small screens.</div>
+</section>
+</main>
+<button id="up" aria-label="Back to top">↑</button>
+<script>
+(function(){
+  var d=document.getElementById('drawer'),p=document.getElementById('prog'),u=document.getElementById('up');
+  document.getElementById('menu').onclick=function(){d.classList.add('open')};
+  document.getElementById('close').onclick=function(){d.classList.remove('open')};
+  d.onclick=function(e){if(e.target===d||e.target.tagName==='A')d.classList.remove('open')};
+  u.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})};
+  function f(){var h=document.documentElement,s=h.scrollTop||document.body.scrollTop,m=h.scrollHeight-h.clientHeight;
+    p.style.width=(m>0?s/m*100:0)+'%';u.style.display=s>600?'block':'none';}
+  window.addEventListener('scroll',f,{passive:true});f();
+  // current section title in header
+  var secs=[].slice.call(document.querySelectorAll('.stagehead,.chapter')),t=document.getElementById('ttl');
+  function cur(){var y=window.scrollY+120,n='The AI-Native SDLC Playbook';
+    secs.forEach(function(s){if(s.offsetTop<=y){var h=s.querySelector('h2');if(h)n=h.textContent;}});
+    t.textContent=n;}
+  window.addEventListener('scroll',cur,{passive:true});cur();
+})();
+</script>
+</body>
+</html>
