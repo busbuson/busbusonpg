@@ -30,7 +30,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 2;
+      z-index: 1;
       opacity: 0.55;
     }
 
@@ -94,10 +94,12 @@
       box-shadow: 0 0 5px rgba(0, 255, 102, 0.2);
     }
 
-    .btn:hover {
+    .btn:hover,
+    .btn:focus-visible {
       background-color: #00ff66;
       color: #000;
       box-shadow: 0 0 15px #00ff66;
+      outline: none;
     }
 
     /* CRT Scanline overlay effect */
@@ -109,52 +111,61 @@
       height: 100%;
       pointer-events: none;
       background: linear-gradient(
-        rgba(18, 16, 16, 0) 50%, 
+        rgba(18, 16, 16, 0) 50%,
         rgba(0, 0, 0, 0.25) 50%
       );
       background-size: 100% 4px;
       z-index: 3;
+    }
+
+    @media (max-width: 480px) {
+      .error-code { font-size: 3.5rem; }
+      .terminal { padding: 1.75rem 1.25rem; }
     }
   </style>
 </head>
 <body>
 
   <!-- Matrix Rain Canvas Background -->
-  <canvas id="matrixCanvas"></canvas>
+  <canvas id="matrixCanvas" aria-hidden="true"></canvas>
 
   <!-- CRT Screen lines overlay -->
-  <div class="scanlines"></div>
+  <div class="scanlines" aria-hidden="true"></div>
 
   <!-- Main Terminal Box -->
-  <div class="terminal">
+  <main class="terminal">
     <div class="error-code">ERROR</div>
     <h1>[ Page Not Found ]</h1>
     <p>
       <span class="prompt">&gt;</span> The requested address does not exist in the mainframe or has been disconnected from the network.
     </p>
     <a href="/" class="btn">&gt; Reconnect to Root</a>
-  </div>
+  </main>
 
   <script>
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
     // Characters for the digital rain (Japanese katakana + numbers + letters)
     const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const fontSize = 16;
-    let columns = Math.floor(canvas.width / fontSize);
     let drops = [];
 
-    for (let i = 0; i < columns; i++) {
-      drops[i] = 1;
+    // Resize canvas and rebuild the rain columns so it fills any screen size
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const columns = Math.ceil(canvas.width / fontSize);
+      const oldDrops = drops;
+      drops = new Array(columns);
+      for (let i = 0; i < columns; i++) {
+        drops[i] = oldDrops[i] !== undefined ? oldDrops[i] : 1;
+      }
     }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     function draw() {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
@@ -174,7 +185,12 @@
       }
     }
 
-    setInterval(draw, 33);
+    // Respect users who prefer reduced motion: draw one static frame only
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (let n = 0; n < 40; n++) draw();
+    } else {
+      setInterval(draw, 33);
+    }
   </script>
 
 </body>
